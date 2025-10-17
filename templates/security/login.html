@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Iniciar Sesión - ACT Milagro{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <img src="{% static 'img/Logo_ACT.png' %}" alt="ACT Logo" class="login-logo">
+            <h1>INICIAR SESIÓN</h1>
+            <p>Sistema de Autorización ACT Milagro</p>
+        </div>
+
+        {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" class="login-form">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="error-message">
+                <strong>Error:</strong> Por favor, corrija los siguientes errores.
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_username">Usuario</label>
+                <input type="text" 
+                       name="username" 
+                       id="id_username" 
+                       class="form-control" 
+                       placeholder="Ingrese su usuario"
+                       required
+                       autofocus
+                       value="{{ form.username.value|default:'' }}">
+            </div>
+
+            <div class="form-group">
+                <label for="id_password">Contraseña</label>
+                <div class="password-container">
+                    <input type="password" 
+                           name="password" 
+                           id="id_password" 
+                           class="form-control" 
+                           placeholder="Ingrese su contraseña"
+                           required>
+                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <span class="eye-icon">👁️</span>
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="login-btn">Iniciar Sesión</button>
+        </form>
+
+        <div class="login-footer">
+            <p><strong>EMOVIM-EP</strong> | Av. Simón Bolívar y Juan Montalvo | Milagro, Ecuador</p>
+            <p id="current-date">Fecha: {{ current_date }}</p>
+        </div>
+    </div>
+</div>
+
+<style>
+.login-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #004d99 0%, #007bff 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+.login-card {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 450px;
+    border-top: 6px solid #004d99;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.login-logo {
+    max-width: 120px;
+    margin-bottom: 15px;
+}
+
+.login-header h1 {
+    font-size: 1.8em;
+    color: #004d99;
+    margin: 0 0 10px 0;
+    font-weight: 700;
+}
+
+.login-header p {
+    color: #6c757d;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.login-form {
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.password-container {
+    position: relative;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    width: auto;
+}
+
+.toggle-password:hover {
+    background-color: #f8f9fa;
+}
+
+.eye-icon {
+    font-size: 1.1em;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    margin-top: 10px;
+}
+
+.login-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.messages-container {
+    margin-bottom: 20px;
+}
+
+.message {
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.login-footer {
+    text-align: center;
+    font-size: 0.75em;
+    color: #6c757d;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.login-footer p {
+    margin: 5px 0;
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 25px;
+    }
+    
+    .login-header h1 {
+        font-size: 1.5em;
+    }
+}
+</style>
+
+<script>
+function togglePassword() {
+    const passwordInput = document.getElementById('id_password');
+    const eyeIcon = document.querySelector('.eye-icon');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.textContent = '🙈';
+    } else {
+        passwordInput.type = 'password';
+        eyeIcon.textContent = '👁️';
+    }
+}
+
+// Actualizar fecha actual
+function updateCurrentDate() {
+    const now = new Date();
+    const options = { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    const fechaActual = now.toLocaleDateString('es-EC', options);
+    document.getElementById('current-date').textContent = `Fecha: ${fechaActual}`;
+}
+
+// Actualizar fecha al cargar y cada minuto
+updateCurrentDate();
+setInterval(updateCurrentDate, 60000);
+</script>
+{% endblock %}

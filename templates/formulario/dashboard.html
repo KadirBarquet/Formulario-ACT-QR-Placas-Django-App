@@ -1,0 +1,405 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h2>Dashboard de Autorizaciones</h2>
+    </div>
+
+    <!-- Tarjetas de estadísticas -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon total">📊</div>
+            <div class="stat-info">
+                <h3>{{ total_autorizaciones }}</h3>
+                <p>Total Autorizaciones</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon active">✅</div>
+            <div class="stat-info">
+                <h3>{{ autorizaciones_activas }}</h3>
+                <p>Autorizaciones Activas</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon expired">⚠️</div>
+            <div class="stat-info">
+                <h3>{{ autorizaciones_caducadas }}</h3>
+                <p>Autorizaciones Caducadas</p>
+            </div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon users">👥</div>
+            <div class="stat-info">
+                <h3>{{ total_usuarios }}</h3>
+                <p>Usuarios Registrados</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-content">
+        <!-- Últimas autorizaciones -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h3>Últimas Autorizaciones</h3>
+                <a href="{% url 'formulario:autorizacion_list' %}" class="view-all">Ver todas</a>
+            </div>
+            <div class="section-content">
+                {% if ultimas_autorizaciones %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Usuario</th>
+                                <th>Tipo</th>
+                                <th>Vigencia</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for auth in ultimas_autorizaciones %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'formulario:autorizacion_detail' auth.pk %}">
+                                        {{ auth.placa }}
+                                    </a>
+                                </td>
+                                <td>{{ auth.usuario.nombres }}</td>
+                                <td>{{ auth.tipo_autorizacion.nombre }}</td>
+                                <td>{{ auth.vigencia }}</td>
+                                <td>
+                                    {% if auth.esta_caducada %}
+                                    <span class="status-badge expired">Caducada</span>
+                                    {% else %}
+                                    <span class="status-badge active">Activa</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="no-data">No hay autorizaciones registradas</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actividad reciente -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h3>Actividad Reciente</h3>
+                <a href="{% url 'formulario:historial_list' %}" class="view-all">Ver historial</a>
+            </div>
+            <div class="section-content">
+                {% if actividad_reciente %}
+                <div class="activity-list">
+                    {% for actividad in actividad_reciente %}
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            {% if actividad.accion == 'GENERAR_QR' %}📱
+                            {% elif actividad.accion == 'DESCARGAR_QR' %}📥
+                            {% elif actividad.accion == 'GENERAR_PDF' %}📄
+                            {% elif actividad.accion == 'ACTUALIZAR_AUTORIZACION' %}✏️
+                            {% else %}📝{% endif %}
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">
+                                {{ actividad.descripcion }}
+                            </div>
+                            <div class="activity-meta">
+                                Por {{ actividad.creado_por.get_full_name|default:actividad.creado_por.username }} • 
+                                {{ actividad.fecha_accion|timesince }} atrás
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="no-data">No hay actividad reciente</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="dashboard-section">
+            <div class="section-header">
+                <h3>Acciones Rápidas</h3>
+            </div>
+            <div class="section-content">
+                <div class="quick-actions">
+                    <a href="{% url 'formulario:generar_qr' %}" class="quick-action-btn">
+                        <span class="action-icon">📱</span>
+                        <span class="action-text">Generar Nuevo QR</span>
+                    </a>
+                    <a href="{% url 'formulario:usuario_list' %}" class="quick-action-btn">
+                        <span class="action-icon">👥</span>
+                        <span class="action-text">Gestionar Usuarios</span>
+                    </a>
+                    <a href="{% url 'formulario:autorizacion_list' %}" class="quick-action-btn">
+                        <span class="action-icon">📋</span>
+                        <span class="action-text">Ver Autorizaciones</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.dashboard-header h2 {
+    color: #004d99;
+    margin-bottom: 10px;
+}
+
+.dashboard-header p {
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+/* Grid de estadísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border-left: 4px solid #004d99;
+}
+
+.stat-icon {
+    font-size: 2.5em;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.stat-icon.total { background: #e3f2fd; }
+.stat-icon.active { background: #e8f5e8; }
+.stat-icon.expired { background: #ffebee; }
+.stat-icon.users { background: #f3e5f5; }
+
+.stat-info h3 {
+    font-size: 2em;
+    margin: 0;
+    color: #004d99;
+}
+
+.stat-info p {
+    margin: 5px 0 0 0;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Secciones del dashboard */
+.dashboard-content {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+}
+
+.dashboard-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.section-header {
+    background: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: #004d99;
+}
+
+.view-all {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.view-all:hover {
+    text-decoration: underline;
+}
+
+.section-content {
+    padding: 20px;
+}
+
+/* Tabla */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.data-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* Badges de estado */
+.status-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Lista de actividad */
+.activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    font-size: 1.2em;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    height: fit-content;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.activity-meta {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+/* Acciones rápidas */
+.quick-actions {
+    display: grid;
+    gap: 15px;
+}
+
+.quick-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 20px;
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #495057;
+    transition: all 0.2s;
+}
+
+.quick-action-btn:hover {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+    text-decoration: none;
+}
+
+.action-icon {
+    font-size: 1.5em;
+}
+
+.action-text {
+    font-weight: 500;
+    font-size: 1.1em;
+}
+
+/* Estados vacíos */
+.no-data {
+    text-align: center;
+    color: #6c757d;
+    font-style: italic;
+    padding: 40px 20px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-card {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}

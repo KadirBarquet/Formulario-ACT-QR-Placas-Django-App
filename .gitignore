@@ -1,0 +1,40 @@
+# Ignorar archivos de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignorar archivos de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignorar archivos de virtualenv
+venv/
+
+# Ignorar archivos de archivos de build
+build/
+dist/
+*.egg-info/
+
+# Ignorar archivos de archivos de docs
+docs/_build/
+
+# Ignorar archivos de archivos de tests
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+*.log
+
+# Ignorar archivos de datos y bases de datos
+*.sqlite3
+db.sqlite3
+*.db
+*.sql
+*sqlite 
+*.bak

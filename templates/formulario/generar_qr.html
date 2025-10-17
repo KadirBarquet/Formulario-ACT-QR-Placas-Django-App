@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Generar QR{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <img src="{% static 'img/Logo_ACT.png' %}" alt="ACT Logo" class="logo">
+        <h1>AUTORIZACIÓN</h1>
+    </div>
+
+    <div id="input-section" class="card">
+        <h3>Ingrese los Datos del Propietario</h3>
+        <form method="post" id="qr-form">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="error-message">
+                <strong>Error:</strong> Por favor, corrija los siguientes errores.
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="id_placa">Placa</label>
+                {{ form.placa }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_nombres">Nombres</label>
+                {{ form.nombres }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_tipo_identificacion">Tipo de identificación</label>
+                {{ form.tipo_identificacion }}
+            </div>
+            
+            <div class="form-group" id="input-id-container">
+                <!-- Se llena dinámicamente con JavaScript -->
+            </div>
+
+            <div class="form-group">
+                <label for="id_correo">Correo Electrónico</label>
+                {{ form.correo }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_telefono">Teléfono</label>
+                {{ form.telefono }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_tipo_autorizacion">Tipo de Autorización</label>
+                {{ form.tipo_autorizacion }}
+            </div>
+            
+            <div class="form-group" id="input-autorizacion-container">
+                <!-- Se llena dinámicamente con JavaScript -->
+            </div>
+            
+            <div class="form-group">
+                <label for="id_numero_autorizacion">Número de Autorización</label>
+                {{ form.numero_autorizacion }}
+            </div>
+            
+            <div class="form-group">
+                <label for="id_vigencia">Vigencia</label>
+                {{ form.vigencia }}
+            </div>
+            
+            <button type="submit" class="submit-btn">Validar y Generar QR</button>
+        </form>
+        <div id="result-message" class="error"></div>
+    </div>
+
+    {% if qr_generado %}
+    <div id="qr-container" class="card">
+        <h3>Código QR Generado</h3>
+        <div id="qrcode"></div>
+        <div class="action-buttons">
+            <button class="download-btn" onclick="downloadQR()">Descargar QR (PNG)</button>
+            <button class="pdf-btn" onclick="generatePDF()">Generar PDF de Autorización</button>
+        </div>
+    </div>
+
+    <div id="auth-details" class="card">
+        <h3>Detalles de la Autorización</h3>
+        <p><strong>Número de Documento:</strong> <span id="auth-autorizacion">{{ autorizacion_data.numero_autorizacion }}</span></p>
+        <p><strong>Placa:</strong> <span id="auth-placa">{{ autorizacion_data.placa }}</span></p>
+        <p><strong>Nombres:</strong> <span id="auth-nombre">{{ autorizacion_data.nombres }}</span></p>
+        <p><strong>Tipo de Autorización:</strong> <span id="auth-tipo-autorizacion">{{ autorizacion_data.tipo_autorizacion }}</span></p>
+        <p><strong>Vigencia:</strong> <span id="auth-caducidad">{{ autorizacion_data.vigencia }}</span></p>
+        
+        {% if autorizacion_data.esta_caducada %}
+        <div class="expiration-message">
+            <h4>⚠️ AUTORIZACIÓN CADUCADA</h4>
+            <p>Esta autorización ya no es válida. Por favor, renueve su permiso.</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Variables globales
+let currentPlaca = '{{ autorizacion_data.placa|default:"" }}';
+let currentData = {{ autorizacion_data|default:"{}"|safe }};
+let currentTipoAutorizacion = '{{ autorizacion_data.tipo_autorizacion|default:"" }}';
+
+// Inicialización cuando el DOM está listo
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha mínima como hoy
+    const today = new Date().toISOString().split('T')[0];
+    const vigenciaInput = document.getElementById('id_vigencia');
+    if (vigenciaInput) {
+        vigenciaInput.min = today;
+    }
+    
+    // Inicializar campos de identificación
+    mostrarInputID();
+    
+    // Inicializar campos de autorización
+    mostrarInputAutorizacion();
+    
+    // Generar QR si ya hay datos
+    {% if qr_generado and autorizacion_data %}
+    generateQR();
+    {% endif %}
+});
+
+// Mostrar campos de identificación según el tipo seleccionado
+function mostrarInputID() {
+    const tipoSelect = document.getElementById('id_tipo_identificacion');
+    const container = document.getElementById('input-id-container');
+    
+    if (!tipoSelect || !container) return;
+    
+    const tipo = tipoSelect.value;
+    container.innerHTML = '';
+    
+    if (tipo === 'cedula') {
+        container.innerHTML = `
+            <label for="id_cedula">Cédula (10 dígitos)</label>
+            <input type="text" id="id_cedula" name="cedula" class="form-control" 
+                   placeholder="Ej: 0956305672" pattern="^09\d{10}$" 
+                   title="La cédula debe comenzar con 09 y tener 10 dígitos"
+                   maxlength="10">
+        `;
+    } else if (tipo === 'ruc') {
+        container.innerHTML = `
+            <label for="id_ruc">RUC (13 dígitos)</label>
+            <input type="text" id="id_ruc" name="ruc" class="form-control" 
+                   placeholder="Ej: 1234567890123" pattern="^\d{13}$" 
+                   title="El RUC debe tener 13 dígitos"
+                   maxlength="13">
+        `;
+    } else if (tipo === 'ambos') {
+        container.innerHTML = `
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="id_cedula">Cédula (10 dígitos)</label>
+                    <input type="text" id="id_cedula" name="cedula" class="form-control" 
+                           placeholder="Ej: 0956305672" pattern="^09\d{10}$" 
+                           title="La cédula debe comenzar con 09 y tener 10 dígitos"
+                           maxlength="10">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="id_ruc">RUC (13 dígitos)</label>
+                    <input type="text" id="id_ruc" name="ruc" class="form-control" 
+                           placeholder="Ej: 1234567890123" pattern="^\d{13}$" 
+                           title="El RUC debe tener 13 dígitos"
+                           maxlength="13">
+                </div>
+            </div>
+        `;
+    }
+}
+
+// Validaciones del formulario antes de enviar
+document.getElementById('qr-form').addEventListener('submit', function(e) {
+    const tipoIdentificacion = document.getElementById('id_tipo_identificacion').value;
+    const message = document.getElementById('result-message');
+    
+    message.textContent = '';
+    message.className = '';
+    
+    let isValid = true;
+    let errorMessage = '';
+
+    // Validar campos de identificación según el tipo seleccionado
+    if (tipoIdentificacion === 'cedula') {
+        const cedula = document.getElementById('id_cedula');
+        if (!cedula || !cedula.value.trim()) {
+            isValid = false;
+            errorMessage = 'La cédula es requerida para este tipo de identificación.';
+        } else if (!/^09\d{10}$/.test(cedula.value.trim())) {
+            isValid = false;
+            errorMessage = 'La cédula debe comenzar con 09 y tener 10 dígitos. Ej: 0956305672';
+        }
+    } else if (tipoIdentificacion === 'ruc') {
+        const ruc = document.getElementById('id_ruc');
+        if (!ruc || !ruc.value.trim()) {
+            isValid = false;
+            errorMessage = 'El RUC es requerido para este tipo de identificación.';
+        } else if (!/^\d{13}$/.test(ruc.value.trim())) {
+            isValid = false;
+            errorMessage = 'El RUC debe tener exactamente 13 dígitos numéricos.';
+        }
+    } else if (tipoIdentificacion === 'ambos') {
+        const cedula = document.getElementById('id_cedula');
+        const ruc = document.getElementById('id_ruc');
+        if (!cedula || !cedula.value.trim() || !ruc || !ruc.value.trim()) {
+            isValid = false;
+            errorMessage = 'Ambos campos de identificación son requeridos.';
+        } else if (!/^09\d{10}$/.test(cedula.value.trim())) {
+            isValid = false;
+            errorMessage = 'La cédula debe comenzar con 09 y tener 10 dígitos.';
+        } else if (!/^\d{13}$/.test(ruc.value.trim())) {
+            isValid = false;
+            errorMessage = 'El RUC debe tener exactamente 13 dígitos numéricos.';
+        }
+    }
+    
+    if (!isValid) {
+        e.preventDefault();
+        message.textContent = errorMessage;
+        message.className = 'error';
+        return;
+    }
+    
+    // Mostrar mensaje de procesamiento
+    message.textContent = 'Procesando formulario...';
+    message.className = 'success';
+});
+
+// Validaciones del formulario antes de enviar
+document.getElementById('qr-form').addEventListener('submit', function(e) {
+    const tipoIdentificacion = document.getElementById('id_tipo_identificacion').value;
+    const message = document.getElementById('result-message');
+    
+    message.textContent = '';
+    message.className = '';
+    
+    // Validar campos de identificación según el tipo seleccionado
+    if (tipoIdentificacion === 'cedula') {
+        const cedula = document.getElementById('id_cedula');
+        if (!cedula || !cedula.value) {
+            e.preventDefault();
+            message.textContent = 'La cédula es requerida para este tipo de identificación.';
+            message.className = 'error';
+            return;
+        }
+    } else if (tipoIdentificacion === 'ruc') {
+        const ruc = document.getElementById('id_ruc');
+        if (!ruc || !ruc.value) {
+            e.preventDefault();
+            message.textContent = 'El RUC es requerido para este tipo de identificación.';
+            message.className = 'error';
+            return;
+        }
+    } else if (tipoIdentificacion === 'ambos') {
+        const cedula = document.getElementById('id_cedula');
+        const ruc = document.getElementById('id_ruc');
+        if (!cedula || !cedula.value || !ruc || !ruc.value) {
+            e.preventDefault();
+            message.textContent = 'Ambos campos de identificación son requeridos.';
+            message.className = 'error';
+            return;
+        }
+    }
+    
+    // Mostrar mensaje de procesamiento
+    message.textContent = 'Procesando formulario...';
+    message.className = 'success';
+});
+
+// Generar código QR
+function generateQR() {
+    const qrContainer = document.getElementById('qrcode');
+    if (!qrContainer) return false;
+    
+    qrContainer.innerHTML = '';
+    
+    const qrUrl = '{{ qr_url|default:"" }}';
+    if (!qrUrl) return false;
+    
+    try {
+        new QRCode(qrContainer, {
+            text: qrUrl,
+            width: 200,
+            height: 200,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: QRCode.CorrectLevel.H
+        });
+        return true;
+    } catch (error) {
+        console.error('Error generando QR:', error);
+        return false;
+    }
+}
+
+// Descargar QR como PNG
+function downloadQR() {
+    if (!currentPlaca) {
+        alert('Primero genere un QR válido.');
+        return;
+    }
+    
+    const qrCanvas = document.querySelector('#qrcode canvas');
+    if (!qrCanvas) {
+        alert('No se encontró el QR para descargar.');
+        return;
+    }
+    
+    const link = document.createElement('a');
+    link.download = `placa_${currentPlaca}.png`;
+    link.href = qrCanvas.toDataURL('image/png');
+    link.click();
+}
+
+// Generar PDF
+function generatePDF() {
+    if (!window.jspdf) {
+        alert('Error: La librería jsPDF no está disponible.');
+        return;
+    }
+    
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    // Configurar fuente
+    doc.setFont("helvetica");
+    
+    // Encabezado
+    doc.setFontSize(18);
+    doc.setTextColor(0, 77, 153);
+    doc.text('AUTORIZACIÓN', 105, 25, { align: 'center' });
+    
+    // Línea separadora
+    doc.line(20, 35, 190, 35);
+    
+    // Resto del contenido en negro
+    doc.setTextColor(0, 0, 0);
+    
+    // Mensaje principal
+    doc.setFontSize(12);
+    const mensaje = `Estimado/a ${currentData.nombres}, este mensaje es para indicarle que se ha emitido la autorización correspondiente desde la Autoridad de Control de Tránsito Milagro (ACT).`;
+    
+    const margin = 20;
+    const maxWidth = 170;
+    const lines = doc.splitTextToSize(mensaje, maxWidth);
+    
+    let y = 50;
+    lines.forEach((line, index) => {
+        doc.text(line, margin, y + (index * 7));
+    });
+    
+    // Detalles de la autorización
+    let detailsY = y + (lines.length * 7) + 15;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text('DETALLES DE LA AUTORIZACIÓN:', 20, detailsY);
+    
+    detailsY += 10;
+    doc.setFont("helvetica", "normal");
+    doc.text(`• Número de Documento: ${currentData.numero_autorizacion}`, 25, detailsY);
+    detailsY += 8;
+    doc.text(`• Placa: ${currentData.placa}`, 25, detailsY);
+    detailsY += 8;
+    doc.text(`• Nombres: ${currentData.nombres}`, 25, detailsY);
+    detailsY += 8;
+    doc.text(`• Tipo de Autorización: ${currentData.tipo_autorizacion}`, 25, detailsY);
+    detailsY += 8;
+    doc.text(`• Vigencia: ${currentData.vigencia}`, 25, detailsY);
+    
+    // Pie de página
+    doc.line(20, 260, 190, 260);
+    doc.setFontSize(8);
+    doc.text('EMOVIM-EP Ecuador', 105, 270, { align: 'center' });
+    doc.text('genercia@emovim-ep.gob.ec', 105, 275, { align: 'center' });
+    
+    // Fecha actual
+    const now = new Date();
+    doc.text(`Fecha de emisión: ${now.toLocaleDateString('es-EC')} ${now.toLocaleTimeString('es-EC')}`, 105, 285, { align: 'center' });
+    
+    // Descargar PDF
+    doc.save(`Autorizacion_${currentData.placa}_${currentData.nombres}.pdf`);
+}
+
+// Event listeners para cambios dinámicos
+document.getElementById('id_tipo_identificacion').addEventListener('change', mostrarInputID);
+document.getElementById('id_tipo_autorizacion').addEventListener('change', mostrarInputAutorizacion);
+</script>
+
+<style>
+/* Estilos específicos para el formulario QR */
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-top: 6px solid #004d99;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.header img {
+    max-width: 120px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 1.8em;
+    color: #004d99;
+    margin: 0;
+    font-weight: 700;
+}
+
+.card {
+    background-color: #ffffff;
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #dee2e6;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    background-color: #f8f9fa;
+    color: #495057;
+    font-size: 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    margin-top: 15px;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.submit-btn:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.download-btn {
+    background-color: #28a745;
+    margin-top: 10px;
+}
+
+.download-btn:hover {
+    background-color: #1e7e34;
+}
+
+.pdf-btn {
+    background-color: #dc3545;
+    margin-top: 10px;
+}
+
+.pdf-btn:hover {
+    background-color: #c82333;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    flex: 1;
+    min-width: 200px;
+}
+
+#qr-container {
+    text-align: center;
+}
+
+#qrcode {
+    margin: 20px auto;
+}
+
+#result-message {
+    text-align: center;
+    margin: 15px 0;
+    padding: 10px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.error {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+}
+
+.success {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+}
+
+#auth-details p {
+    margin: 8px 0;
+    padding-left: 10px;
+    border-left: 3px solid #004d99;
+}
+
+#auth-details strong {
+    color: #004d99;
+    font-weight: 600;
+}
+
+.expiration-message {
+    background-color: #ffebee;
+    border: 2px solid #f44336;
+    border-radius: 5px;
+    padding: 15px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.expiration-message h4 {
+    color: #d32f2f !important;
+    margin: 0;
+    font-size: 1.2em;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.error-message ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .container {
+        padding: 20px;
+        border-radius: 0;
+        box-shadow: none;
+        border-top-width: 5px;
+    }
+    
+    .card {
+        padding: 15px;
+    }
+    
+    h1 {
+        font-size: 1.6em;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .action-buttons button {
+        min-width: auto;
+    }
+}
+</style>
+{% endblock %}

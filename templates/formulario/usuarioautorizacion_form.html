@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if object %}Editar{% else %}Crear{% endif %} Usuario{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{% if object %}Editar{% else %}Crear{% endif %} Usuario</h1>
+</div>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+        <div class="error-message">
+            <strong>Error:</strong> Por favor, corrija los siguientes errores.
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="form-section">
+            <h3>👤 Información Personal</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_nombres">Nombres Completos *</label>
+                    {{ form.nombres }}
+                    <small class="form-text">Nombres y apellidos del usuario</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>🆔 Identificación</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_cedula">Cédula *</label>
+                    {{ form.cedula }}
+                    <small class="form-text">Cédula de 10 dígitos que comience con 09</small>
+                </div>
+                <div class="form-group">
+                    <label for="id_ruc">RUC</label>
+                    {{ form.ruc }}
+                    <small class="form-text">RUC de 13 dígitos (opcional)</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>📞 Información de Contacto</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_correo">Correo Electrónico *</label>
+                    {{ form.correo }}
+                    <small class="form-text">Correo electrónico válido</small>
+                </div>
+                <div class="form-group">
+                    <label for="id_telefono">Teléfono *</label>
+                    {{ form.telefono }}
+                    <small class="form-text">Teléfono de 10 dígitos que comience con 09</small>
+                </div>
+            </div>
+        </div>
+
+        {% if object %}
+        <div class="form-section">
+            <h3>⚙️ Configuración</h3>
+            <div class="form-row">
+                <div class="form-group checkbox-group">
+                    {{ form.activo }}
+                    <label for="id_activo">Usuario activo</label>
+                    <small class="form-text">Desmarque para desactivar este usuario</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">
+                {% if object %}💾 Guardar Cambios{% else %}👥 Crear Usuario{% endif %}
+            </button>
+            <a href="{% if object %}{% url 'formulario:usuario_detail' object.pk %}{% else %}{% url 'formulario:usuario_list' %}{% endif %}" class="btn-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</div>
+
+<style>
+.form-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
+}
+
+.form-section h3 {
+    color: #004d99;
+    margin-bottom: 20px;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    transform: scale(1.2);
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.form-text {
+    display: block;
+    margin-top: 5px;
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 25px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.error-message ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+}
+
+.error-message li {
+    margin-bottom: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Formatear automáticamente los campos numéricos
+    const cedulaInput = document.getElementById('id_cedula');
+    const rucInput = document.getElementById('id_ruc');
+    const telefonoInput = document.getElementById('id_telefono');
+    
+    function formatNumericInput(input, maxLength) {
+        if (input) {
+            input.addEventListener('input', function(e) {
+                // Remover caracteres no numéricos
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                // Limitar longitud
+                if (this.value.length > maxLength) {
+                    this.value = this.value.slice(0, maxLength);
+                }
+            });
+        }
+    }
+    
+    formatNumericInput(cedulaInput, 10);
+    formatNumericInput(rucInput, 13);
+    formatNumericInput(telefonoInput, 10);
+});
+</script>
+{% endblock %}

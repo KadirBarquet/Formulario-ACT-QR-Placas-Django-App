@@ -1,0 +1,387 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Autorización{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Detalle de Autorización</h1>
+</div>
+
+<div class="detail-container">
+    <!-- Tarjeta de información principal -->
+    <div class="detail-card">
+        <div class="card-header">
+            <h2>Información de la Autorización</h2>
+            <div class="header-actions">
+                <a href="{% url 'formulario:autorizacion_update' autorizacion.pk %}" class="btn-primary">
+                    ✏️ Editar
+                </a>
+                <a href="{% url 'formulario:autorizacion_list' %}" class="btn-secondary">
+                    📋 Volver al Listado
+                </a>
+            </div>
+        </div>
+
+        <div class="card-content">
+            <div class="info-grid">
+                <div class="info-section">
+                    <h3>📋 Datos de la Autorización</h3>
+                    <div class="info-item">
+                        <strong>Número de Autorización:</strong>
+                        <span>{{ autorizacion.numero_autorizacion }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Tipo de Autorización:</strong>
+                        <span>{{ autorizacion.tipo_autorizacion.nombre }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Vigencia:</strong>
+                        <span>{{ autorizacion.vigencia }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Estado:</strong>
+                        <span class="status-badge {% if autorizacion.activo %}{% if autorizacion.esta_caducada %}warning{% else %}success{% endif %}{% else %}danger{% endif %}">
+                            {% if autorizacion.activo %}
+                                {% if autorizacion.esta_caducada %}CADUCADA{% else %}ACTIVA{% endif %}
+                            {% else %}
+                                INACTIVA
+                            {% endif %}
+                        </span>
+                    </div>
+                    {% if autorizacion.activo and not autorizacion.esta_caducada %}
+                    <div class="info-item">
+                        <strong>Días Restantes:</strong>
+                        <span class="text-success">{{ autorizacion.dias_restantes }} días</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="info-section">
+                    <h3>🚗 Información del Vehículo</h3>
+                    <div class="info-item">
+                        <strong>Placa:</strong>
+                        <span>{{ autorizacion.placa }}</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>👤 Datos del Usuario</h3>
+                    <div class="info-item">
+                        <strong>Nombres:</strong>
+                        <span>{{ autorizacion.usuario.nombres }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Cédula:</strong>
+                        <span>{{ autorizacion.usuario.cedula }}</span>
+                    </div>
+                    {% if autorizacion.usuario.ruc %}
+                    <div class="info-item">
+                        <strong>RUC:</strong>
+                        <span>{{ autorizacion.usuario.ruc }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="info-item">
+                        <strong>Correo Electrónico:</strong>
+                        <span>{{ autorizacion.usuario.correo }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Teléfono:</strong>
+                        <span>{{ autorizacion.usuario.telefono }}</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>📊 Información del Sistema</h3>
+                    <div class="info-item">
+                        <strong>Creado por:</strong>
+                        <span>{{ autorizacion.creado_por.get_full_name|default:autorizacion.creado_por.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Fecha de creación:</strong>
+                        <span>{{ autorizacion.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Última actualización:</strong>
+                        <span>{{ autorizacion.fecha_actualizacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% if autorizacion.fecha_descarga_qr %}
+                    <div class="info-item">
+                        <strong>QR descargado:</strong>
+                        <span>{{ autorizacion.fecha_descarga_qr|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                    {% if autorizacion.fecha_descarga_pdf %}
+                    <div class="info-item">
+                        <strong>PDF descargado:</strong>
+                        <span>{{ autorizacion.fecha_descarga_pdf|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Historial de la autorización -->
+    <div class="detail-card">
+        <div class="card-header">
+            <h2>📜 Historial de Actividad</h2>
+        </div>
+        <div class="card-content">
+            {% if historial %}
+            <div class="activity-list">
+                {% for actividad in historial %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        {% if actividad.accion == 'GENERAR_QR' %}📱
+                        {% elif actividad.accion == 'DESCARGAR_QR' %}📥
+                        {% elif actividad.accion == 'GENERAR_PDF' %}📄
+                        {% elif actividad.accion == 'ACTUALIZAR_AUTORIZACION' %}✏️
+                        {% else %}📝{% endif %}
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">
+                            {{ actividad.descripcion }}
+                        </div>
+                        <div class="activity-meta">
+                            Por {{ actividad.creado_por.get_full_name|default:actividad.creado_por.username }} • 
+                            {{ actividad.fecha_accion|date:"d/m/Y H:i" }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <p>No hay actividad registrada para esta autorización.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.detail-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    margin: 0;
+    color: #004d99;
+    font-size: 1.4em;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.card-content {
+    padding: 25px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.info-section {
+    padding: 0;
+}
+
+.info-section h3 {
+    color: #004d99;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+.info-item span {
+    color: #004d99;
+    font-weight: 500;
+    text-align: right;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.text-success {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Estilos para el historial */
+.activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    font-size: 1.2em;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    height: fit-content;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #495057;
+}
+
+.activity-meta {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+/* Botones */
+.btn-primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .info-item span {
+        text-align: left;
+    }
+}
+</style>
+{% endblock %}

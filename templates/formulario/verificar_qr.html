@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Verificar QR{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <img src="{% static 'img/Logo_ACT.png' %}" alt="ACT Logo" class="logo">
+        <h1>VERIFICACIÓN DE AUTORIZACIÓN</h1>
+    </div>
+
+    <div class="card">
+        <div class="verification-result">
+            {% if autorizacion_data %}
+                {% if esta_caducada %}
+                <div class="result-icon expired">⚠️</div>
+                <h2 class="result-title expired">AUTORIZACIÓN CADUCADA</h2>
+                {% else %}
+                <div class="result-icon valid">✅</div>
+                <h2 class="result-title valid">AUTORIZACIÓN VÁLIDA</h2>
+                {% endif %}
+                
+                <div class="autorizacion-details">
+                    <h3>Detalles de la Autorización</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <strong>Placa:</strong>
+                            <span>{{ autorizacion_data.placa }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Nombres:</strong>
+                            <span>{{ autorizacion_data.nombres }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Cédula:</strong>
+                            <span>{{ autorizacion_data.cedula }}</span>
+                        </div>
+                        {% if autorizacion_data.ruc %}
+                        <div class="detail-item">
+                            <strong>RUC:</strong>
+                            <span>{{ autorizacion_data.ruc }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="detail-item">
+                            <strong>Número de Autorización:</strong>
+                            <span>{{ autorizacion_data.numero_autorizacion }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Tipo de Autorización:</strong>
+                            <span>{{ autorizacion_data.tipo_autorizacion }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Vigencia:</strong>
+                            <span>{{ autorizacion_data.vigencia }}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Estado:</strong>
+                            <span class="status-badge {% if esta_caducada %}expired{% else %}valid{% endif %}">
+                                {% if esta_caducada %}CADUCADA{% else %}VÁLIDA{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="result-icon invalid">❌</div>
+                <h2 class="result-title invalid">NO SE PUDO VERIFICAR</h2>
+                <p class="result-message">{{ mensaje }}</p>
+            {% endif %}
+        </div>
+
+        <div class="verification-actions">
+            <a href="{% url 'formulario:generar_qr' %}" class="action-btn primary">
+                Generar Nueva Autorización
+            </a>
+            <a href="{% url 'formulario:verificar_qr' %}" class="action-btn secondary">
+                Verificar Otro QR
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-top: 6px solid #004d99;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.header img {
+    max-width: 120px;
+    margin-bottom: 10px;
+}
+
+h1 {
+    font-size: 1.8em;
+    color: #004d99;
+    margin: 0;
+    font-weight: 700;
+}
+
+.card {
+    background-color: #ffffff;
+    padding: 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #dee2e6;
+}
+
+.verification-result {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.result-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+}
+
+.result-title {
+    margin-bottom: 20px;
+    font-weight: 700;
+}
+
+.result-title.valid {
+    color: #28a745;
+}
+
+.result-title.expired {
+    color: #dc3545;
+}
+
+.result-title.invalid {
+    color: #6c757d;
+}
+
+.result-message {
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+.autorizacion-details {
+    text-align: left;
+    margin-top: 30px;
+}
+
+.autorizacion-details h3 {
+    color: #004d99;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 15px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-item strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+.detail-item span {
+    color: #004d99;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.valid {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.verification-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.action-btn {
+    padding: 12px 25px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    text-align: center;
+    min-width: 200px;
+}
+
+.action-btn.primary {
+    background: #007bff;
+    color: white;
+    border: 2px solid #007bff;
+}
+
+.action-btn.primary:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+    text-decoration: none;
+    color: white;
+}
+
+.action-btn.secondary {
+    background: transparent;
+    color: #6c757d;
+    border: 2px solid #6c757d;
+}
+
+.action-btn.secondary:hover {
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .container {
+        padding: 20px;
+    }
+    
+    .card {
+        padding: 15px;
+    }
+    
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .detail-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .verification-actions {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        min-width: auto;
+    }
+}
+</style>
+{% endblock %}

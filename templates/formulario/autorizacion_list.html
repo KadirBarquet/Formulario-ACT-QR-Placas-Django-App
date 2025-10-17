@@ -1,0 +1,625 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Autorizaciones{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Gestión de Autorizaciones</h1>
+</div>
+
+<!-- Filtros y Búsqueda -->
+<div class="filters-card">
+    <form method="get" class="filter-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_tipo_busqueda">Buscar por:</label>
+                {{ busqueda_form.tipo_busqueda }}
+            </div>
+            <div class="form-group">
+                <label for="id_termino_busqueda">Término:</label>
+                {{ busqueda_form.termino_busqueda }}
+            </div>
+            <div class="form-group checkbox-group">
+                {{ busqueda_form.solo_activas }}
+                <label for="id_solo_activas">Solo activas</label>
+            </div>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_tipo_autorizacion">Tipo:</label>
+                {{ filtro_form.tipo_autorizacion }}
+            </div>
+            <div class="form-group">
+                <label for="id_estado">Estado:</label>
+                {{ filtro_form.estado }}
+            </div>
+            <div class="form-group">
+                <label for="id_fecha_desde">Desde:</label>
+                {{ filtro_form.fecha_desde }}
+            </div>
+            <div class="form-group">
+                <label for="id_fecha_hasta">Hasta:</label>
+                {{ filtro_form.fecha_hasta }}
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Aplicar Filtros</button>
+            <a href="{% url 'formulario:autorizacion_list' %}" class="btn-secondary">Limpiar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="stats-grid">
+    <div class="stat-item">
+        <span class="stat-number">{{ autorizaciones.count }}</span>
+        <span class="stat-label">Total</span>
+    </div>
+    <div class="stat-item">
+        <span class="stat-number">{{ autorizaciones|length }}</span>
+        <span class="stat-label">Mostradas</span>
+    </div>
+</div>
+
+<!-- Tabla de autorizaciones -->
+<div class="table-card">
+    {% if autorizaciones %}
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Placa</th>
+                    <th>Usuario</th>
+                    <th>Tipo</th>
+                    <th>Número Autorización</th>
+                    <th>Vigencia</th>
+                    <th>Estado</th>
+                    <th>Fecha Creación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for auth in autorizaciones %}
+                <tr>
+                    <td>
+                        <strong>{{ auth.placa }}</strong>
+                    </td>
+                    <td>{{ auth.usuario.nombres }}</td>
+                    <td>{{ auth.tipo_autorizacion.nombre }}</td>
+                    <td>{{ auth.numero_autorizacion }}</td>
+                    <td>
+                        {{ auth.vigencia }}
+                        {% if auth.esta_caducada %}
+                        <br><small class="text-danger">Caducada</small>
+                        {% else %}
+                        <br><small class="text-success">{{ auth.dias_restantes }} días restantes</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if auth.activo %}
+                            {% if auth.esta_caducada %}
+                            <span class="status-badge warning">Caducada</span>
+                            {% else %}
+                            <span class="status-badge success">Activa</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="status-badge danger">Inactiva</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ auth.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <a href="{% url 'formulario:autorizacion_detail' auth.pk %}" class="btn-icon" title="Ver detalles">
+                                👁️
+                            </a>
+                            <a href="{% url 'formulario:autorizacion_update' auth.pk %}" class="btn-icon" title="Editar">
+                                ✏️
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">« Primera</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">‹ Anterior</a>
+        {% endif %}
+
+        <span class="current-page">
+            Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">Siguiente ›</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="page-link">Última »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <h3>No se encontraron autorizaciones</h3>
+        <p>No hay autorizaciones que coincidan con los criterios de búsqueda.</p>
+        <a href="{% url 'formulario:generar_qr' %}" class="btn-primary">Generar Nueva Autorización</a>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+/* Estilos específicos para autorizaciones_list.html */
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    color: #004d99;
+    margin-bottom: 10px;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 1.1em;
+    margin: 0;
+}
+
+/* Filtros */
+.filters-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    border-left: 4px solid #004d99;
+}
+
+.filter-form {
+    width: 100%;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 0.9em;
+    box-sizing: border-box;
+    background: #f8f9fa;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+    background: white;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 25px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    transform: scale(1.2);
+    margin: 0;
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9em;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    font-size: 0.9em;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+/* Estadísticas */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.stat-item {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-left: 4px solid #004d99;
+}
+
+.stat-number {
+    display: block;
+    font-size: 2em;
+    font-weight: 700;
+    color: #004d99;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-weight: 500;
+    font-size: 0.9em;
+}
+
+/* Tabla */
+.table-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.table-responsive {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+    position: sticky;
+    top: 0;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.data-table tr:hover {
+    background: #f8f9fa;
+}
+
+.data-table td {
+    font-size: 0.9em;
+    color: #495057;
+}
+
+.data-table td strong {
+    color: #004d99;
+}
+
+/* Badges de estado */
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+    text-align: center;
+    min-width: 80px;
+}
+
+.status-badge.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-badge.warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.status-badge.danger {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-weight: 500;
+    font-size: 0.8em;
+}
+
+.text-success {
+    color: #28a745;
+    font-weight: 500;
+    font-size: 0.8em;
+}
+
+/* Botones de acción */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 1.1em;
+    border: 1px solid #dee2e6;
+}
+
+.btn-icon:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Paginación */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+    flex-wrap: wrap;
+}
+
+.page-link {
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    text-decoration: none;
+    color: #007bff;
+    font-weight: 500;
+    transition: all 0.2s;
+    font-size: 0.9em;
+}
+
+.page-link:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+}
+
+.current-page {
+    padding: 8px 12px;
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.9em;
+}
+
+/* Estado vacío */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 4em;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    color: #495057;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.empty-state p {
+    font-size: 1em;
+    margin-bottom: 25px;
+}
+
+.empty-state .btn-primary {
+    padding: 12px 25px;
+    font-size: 1em;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header h1 {
+        font-size: 1.6em;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .data-table {
+        font-size: 0.8em;
+    }
+    
+    .data-table th,
+    .data-table td {
+        padding: 8px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1em;
+    }
+    
+    .pagination {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .empty-state {
+        padding: 40px 15px;
+    }
+    
+    .empty-icon {
+        font-size: 3em;
+    }
+}
+
+@media (max-width: 480px) {
+    .filters-card,
+    .table-card {
+        padding: 15px;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .stat-item {
+        padding: 15px;
+    }
+}
+</style>
+
+<script>
+// Mejorar la experiencia de usuario en los filtros
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha máxima como hoy para los campos de fecha
+    const today = new Date().toISOString().split('T')[0];
+    const fechaDesde = document.getElementById('id_fecha_desde');
+    const fechaHasta = document.getElementById('id_fecha_hasta');
+    
+    if (fechaDesde) {
+        fechaDesde.max = today;
+    }
+    if (fechaHasta) {
+        fechaHasta.max = today;
+    }
+    
+    // Validar que fecha desde no sea mayor que fecha hasta
+    if (fechaDesde && fechaHasta) {
+        fechaDesde.addEventListener('change', function() {
+            if (this.value && fechaHasta.value && this.value > fechaHasta.value) {
+                fechaHasta.value = this.value;
+            }
+        });
+        
+        fechaHasta.addEventListener('change', function() {
+            if (this.value && fechaDesde.value && this.value < fechaDesde.value) {
+                fechaDesde.value = this.value;
+            }
+        });
+    }
+    
+    // Auto-focus en el campo de búsqueda
+    const terminoBusqueda = document.getElementById('id_termino_busqueda');
+    if (terminoBusqueda) {
+        terminoBusqueda.focus();
+    }
+});
+</script>
+{% endblock %}

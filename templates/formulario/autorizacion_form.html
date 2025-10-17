@@ -1,0 +1,317 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Autorización{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Editar Autorización</h1>
+</div>
+
+<div class="form-card">
+    <form method="post">
+        {% csrf_token %}
+        
+        {% if form.errors %}
+        <div class="error-message">
+            <strong>Error:</strong> Por favor, corrija los siguientes errores.
+            <ul>
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <li>{{ field }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="id_vigencia">Vigencia *</label>
+                {{ form.vigencia }}
+                <small class="form-text">Fecha hasta la cual es válida la autorización</small>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group checkbox-group">
+                {{ form.activo }}
+                <label for="id_activo">Autorización activa</label>
+                <small class="form-text">Desmarque para desactivar esta autorización</small>
+            </div>
+        </div>
+
+        <!-- Información de solo lectura -->
+        <div class="info-section">
+            <h3>Información de la Autorización</h3>
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>Placa:</strong>
+                    <span>{{ object.placa }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Usuario:</strong>
+                    <span>{{ object.usuario.nombres }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Cédula:</strong>
+                    <span>{{ object.usuario.cedula }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Tipo de Autorización:</strong>
+                    <span>{{ object.tipo_autorizacion.nombre }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Número de Autorización:</strong>
+                    <span>{{ object.numero_autorizacion }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>Estado Actual:</strong>
+                    <span class="status-badge {% if object.esta_caducada %}expired{% else %}active{% endif %}">
+                        {% if object.esta_caducada %}CADUCADA{% else %}ACTIVA{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Guardar Cambios</button>
+            <a href="{% url 'formulario:autorizacion_detail' object.pk %}" class="btn-secondary">Cancelar</a>
+            <a href="{% url 'formulario:autorizacion_list' %}" class="btn-link">Volver al Listado</a>
+        </div>
+    </form>
+</div>
+
+<style>
+.page-header {
+    margin-bottom: 30px;
+}
+
+.page-header h1 {
+    color: #004d99;
+    margin-bottom: 10px;
+}
+
+.page-header p {
+    color: #6c757d;
+    font-size: 1.1em;
+}
+
+.form-card {
+    background: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+@media (min-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 1em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    transform: scale(1.2);
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.form-text {
+    display: block;
+    margin-top: 5px;
+    color: #6c757d;
+    font-size: 0.85em;
+}
+
+.info-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 30px 0;
+    border-left: 4px solid #004d99;
+}
+
+.info-section h3 {
+    color: #004d99;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+.info-item span {
+    color: #004d99;
+    font-weight: 500;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.active {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.expired {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-link {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: 500;
+    padding: 12px 0;
+}
+
+.btn-link:hover {
+    text-decoration: underline;
+}
+
+.error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.error-message ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+}
+
+.error-message li {
+    margin-bottom: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Establecer fecha mínima como hoy
+    const today = new Date().toISOString().split('T')[0];
+    const vigenciaInput = document.getElementById('id_vigencia');
+    if (vigenciaInput) {
+        vigenciaInput.min = today;
+    }
+});
+</script>
+{% endblock %}

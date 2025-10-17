@@ -1,0 +1,440 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Detalle de Usuarios{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Detalle de Usuario</h1>
+    <div class="header-actions">
+        <a href="{% url 'formulario:usuario_update' usuario.pk %}" class="btn-primary">
+            ✏️ Editar Usuario
+        </a>
+        <a href="{% url 'formulario:usuario_list' %}" class="btn-secondary">
+            📋 Volver al Listado
+        </a>
+    </div>
+</div>
+
+<div class="detail-container">
+    <!-- Información del usuario -->
+    <div class="detail-card">
+        <div class="card-header">
+            <h2>👤 Información del Usuario</h2>
+            <div class="user-status">
+                <span class="status-badge {% if usuario.activo %}success{% else %}danger{% endif %}">
+                    {% if usuario.activo %}ACTIVO{% else %}INACTIVO{% endif %}
+                </span>
+            </div>
+        </div>
+        <div class="card-content">
+            <div class="info-grid">
+                <div class="info-section">
+                    <h3>Información Personal</h3>
+                    <div class="info-item">
+                        <strong>Nombres Completos:</strong>
+                        <span>{{ usuario.nombres }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Identificación:</strong>
+                        <span>{{ usuario.get_identificacion_completa }}</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Información de Contacto</h3>
+                    <div class="info-item">
+                        <strong>Correo Electrónico:</strong>
+                        <span>{{ usuario.correo }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Teléfono:</strong>
+                        <span>{{ usuario.telefono }}</span>
+                    </div>
+                </div>
+
+                <div class="info-section">
+                    <h3>Información del Sistema</h3>
+                    <div class="info-item">
+                        <strong>Registrado por:</strong>
+                        <span>{{ usuario.creado_por.get_full_name|default:usuario.creado_por.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Fecha de registro:</strong>
+                        <span>{{ usuario.fecha_creacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <strong>Última actualización:</strong>
+                        <span>{{ usuario.fecha_actualizacion|date:"d/m/Y H:i" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Autorizaciones del usuario -->
+    <div class="detail-card">
+        <div class="card-header">
+            <h2>📋 Autorizaciones del Usuario</h2>
+            <span class="badge success">{{ autorizaciones.count }} autorizaciones</span>
+        </div>
+        <div class="card-content">
+            {% if autorizaciones %}
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Placa</th>
+                            <th>Tipo de Autorización</th>
+                            <th>Número</th>
+                            <th>Vigencia</th>
+                            <th>Estado</th>
+                            <th>Fecha Creación</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for auth in autorizaciones %}
+                        <tr>
+                            <td>
+                                <strong>{{ auth.placa }}</strong>
+                            </td>
+                            <td>{{ auth.tipo_autorizacion.nombre }}</td>
+                            <td>{{ auth.numero_autorizacion }}</td>
+                            <td>
+                                {{ auth.vigencia }}
+                                {% if auth.esta_caducada %}
+                                <br><small class="text-danger">Caducada</small>
+                                {% else %}
+                                <br><small class="text-success">{{ auth.dias_restantes }} días restantes</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if auth.activo %}
+                                    {% if auth.esta_caducada %}
+                                    <span class="status-badge warning">Caducada</span>
+                                    {% else %}
+                                    <span class="status-badge success">Activa</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="status-badge danger">Inactiva</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ auth.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'formulario:autorizacion_detail' auth.pk %}" class="btn-icon" title="Ver detalles">
+                                        👁️
+                                    </a>
+                                    <a href="{% url 'formulario:autorizacion_update' auth.pk %}" class="btn-icon" title="Editar">
+                                        ✏️
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📋</div>
+                <h3>No hay autorizaciones</h3>
+                <p>Este usuario no tiene autorizaciones registradas.</p>
+                <a href="{% url 'formulario:generar_qr' %}" class="btn-primary">Generar Nueva Autorización</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+.detail-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.detail-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+.card-header {
+    background: #f8f9fa;
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-header h2 {
+    margin: 0;
+    color: #004d99;
+    font-size: 1.4em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.card-content {
+    padding: 25px;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.info-section {
+    padding: 0;
+}
+
+.info-section h3 {
+    color: #004d99;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 8px;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+}
+
+.info-item strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+.info-item span {
+    color: #004d99;
+    font-weight: 500;
+    text-align: right;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-badge.warning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-badge.danger {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.badge.success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.text-danger {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.text-success {
+    color: #28a745;
+    font-weight: 500;
+}
+
+/* Tabla */
+.table-responsive {
+    overflow-x: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.data-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #495057;
+}
+
+.data-table tr:hover {
+    background: #f8f9fa;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    background: #f8f9fa;
+    color: #495057;
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 1.1em;
+}
+
+.btn-icon:hover {
+    background: #007bff;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.empty-state h3 {
+    color: #495057;
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    margin-bottom: 20px;
+}
+
+/* Header actions */
+.header-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.btn-primary, .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+    color: white;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .card-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+    
+    .info-item span {
+        text-align: left;
+    }
+    
+    .data-table {
+        font-size: 0.9em;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 1em;
+    }
+}
+</style>
+{% endblock %}
