@@ -5,6 +5,8 @@ from django.contrib import messages
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.shortcuts import redirect
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
 class AdminLoginView(LoginView):
     """Vista de login personalizada para administradores"""
@@ -38,7 +40,15 @@ class AdminLogoutView(LogoutView):
     """Vista de logout personalizada"""
     next_page = reverse_lazy('security:login')
     
+    @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
+        # Permitir tanto GET como POST
+        if request.method.lower() != 'post':
+            # Si es GET, procesamos como POST
+            return self.post(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
+    
+    def post(self, request, *args, **kwargs):
         if request.user.is_authenticated:
             messages.info(request, 'Has cerrado sesión exitosamente.')
-        return super().dispatch(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)

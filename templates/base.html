@@ -29,10 +29,13 @@
                     <span class="welcome-text">Bienvenido,</span>
                     <strong class="user-name">{{ user.get_full_name|default:user.username }}</strong>
                 </div>
-                <a href="{% url 'security:logout' %}" class="logout-btn">
-                    <span class="logout-icon">🚪</span>
-                    Cerrar Sesión
-                </a>
+                <form method="post" action="{% url 'security:logout' %}" class="logout-form">
+                    {% csrf_token %}
+                    <button type="submit" class="logout-btn">
+                        <span class="logout-icon">🚪</span>
+                        Cerrar Sesión
+                    </button>
+                </form>
             </div>
         </div>
     </header>
