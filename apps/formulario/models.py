@@ -50,7 +50,7 @@ class UsuarioAutorizacion(AuditoriaModel):
         null=True,
         validators=[
             RegexValidator(
-                regex=r'^09\d{10}$',
+                regex=r'^09\d{8}$',  # CORREGIDO: 09 + 8 dígitos = 10 total
                 message='La cédula debe comenzar con 09 y tener 10 dígitos'
             )
         ]
@@ -79,7 +79,7 @@ class UsuarioAutorizacion(AuditoriaModel):
         null=True,
         validators=[
             RegexValidator(
-                regex=r'^09\d{10}$',
+                regex=r'^09\d{8}$',  # CORREGIDO: 09 + 8 dígitos = 10 total
                 message='El teléfono debe comenzar con 09 y tener 10 dígitos'
             )
         ]
