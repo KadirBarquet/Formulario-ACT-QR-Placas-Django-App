@@ -15,11 +15,13 @@ urlpatterns = [
     path('usuarios/<int:pk>/', views.UsuarioAutorizacionDetailView.as_view(), name='usuario_detail'),
     path('usuarios/crear/', views.UsuarioAutorizacionCreateView.as_view(), name='usuario_create'),
     path('usuarios/<int:pk>/editar/', views.UsuarioAutorizacionUpdateView.as_view(), name='usuario_update'),
+    path('usuarios/<int:pk>/eliminar/', views.UsuarioAutorizacionDeleteView.as_view(), name='usuario_delete'),
     
     # CRUD de Autorizaciones
     path('autorizaciones/', views.AutorizacionListView.as_view(), name='autorizacion_list'),
     path('autorizaciones/<int:pk>/', views.AutorizacionDetailView.as_view(), name='autorizacion_detail'),
     path('autorizaciones/<int:pk>/editar/', views.AutorizacionUpdateView.as_view(), name='autorizacion_update'),
+    path('autorizaciones/<int:pk>/eliminar/', views.AutorizacionDeleteView.as_view(), name='autorizacion_delete'),
     
     # Historial
     path('historial/', views.HistorialListView.as_view(), name='historial_list'),

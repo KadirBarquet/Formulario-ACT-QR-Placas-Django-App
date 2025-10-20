@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.views import View
-from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, TemplateView, DeleteView
 from django.urls import reverse_lazy
 from django.http import JsonResponse
 from django.core.paginator import Paginator
@@ -319,6 +319,28 @@ class UsuarioAutorizacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         
         return super().form_valid(form)
 
+class UsuarioAutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    """Eliminar usuario"""
+    model = UsuarioAutorizacion
+    template_name = 'formulario/usuarioautorizacion_confirm_delete.html'
+    permission_required = 'formulario.delete_usuarioautorizacion'
+    success_url = reverse_lazy('formulario:usuario_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_date'] = timezone.now().strftime('%d/%m/%Y, %H:%M')
+        # Contar autorizaciones relacionadas
+        context['autorizaciones_count'] = self.object.autorizaciones.count()
+        return context
+    
+    def delete(self, request, *args, **kwargs):
+        usuario = self.get_object()
+        messages.success(
+            request, 
+            f'Usuario "{usuario.nombres}" eliminado exitosamente'
+        )
+        return super().delete(request, *args, **kwargs)
+
 # ============================================================================
 # CRUD DE AUTORIZACIONES
 # ============================================================================
@@ -443,6 +465,35 @@ class AutorizacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
         
         messages.success(self.request, 'Autorización actualizada exitosamente')
         return super().form_valid(form)
+
+class AutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
+    """Eliminar autorización"""
+    model = Autorizacion
+    template_name = 'formulario/autorizacion_confirm_delete.html'
+    permission_required = 'formulario.delete_autorizacion'
+    success_url = reverse_lazy('formulario:autorizacion_list')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['current_date'] = timezone.now().strftime('%d/%m/%Y, %H:%M')
+        return context
+    
+    def delete(self, request, *args, **kwargs):
+        autorizacion = self.get_object()
+
+        # Registrar eliminación en historial antes de eliminar
+        HistorialAutorizacion.objects.create(
+            autorizacion=autorizacion,
+            creado_por=request.user,
+            accion='ELIMINAR_AUTORIZACION',
+            descripcion=f'Autorización eliminada: Placa {autorizacion.placa}, Número {autorizacion.numero_autorizacion}'
+        )
+        
+        messages.success(
+            request, 
+            f'Autorización para la placa "{autorizacion.placa}" eliminada exitosamente'
+        )
+        return super().delete(request, *args, **kwargs)
 
 # ============================================================================
 # HISTORIAL
