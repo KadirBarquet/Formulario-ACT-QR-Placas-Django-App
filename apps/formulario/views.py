@@ -57,25 +57,24 @@ class GenerarQRView(LoginRequiredMixin, View):
         
         if form.is_valid():
             try:
-                # Crear la autorización (se espera que la función devuelva la instancia)
+                # Crear la autorización
                 autorizacion, usuario_creado = crear_autorizacion_desde_form(
                     form.cleaned_data, 
                     request.user
                 )
 
-                # Asegurar que creado_por esté asignado y la instancia esté guardada
+                # Asegurar que creado_por esté asignado
                 if not getattr(autorizacion, 'creado_por', None):
                     autorizacion.creado_por = request.user
                 autorizacion.save()
                 autorizacion.refresh_from_db()
 
-                # Generar URL/valor para QR (usa la utilidad existente)
+                # Generar URL para QR
                 qr_url = generar_url_qr(autorizacion, request)
 
-                # Actualizar autorización con QR y marcar generado
+                # Actualizar autorización con QR
                 autorizacion.codigo_qr = qr_url
                 autorizacion.qr_generado = True
-                autorizacion.fecha_qr_generado = timezone.now() if hasattr(autorizacion, 'fecha_qr_generado') else None
                 autorizacion.save()
 
                 # Crear registro en historial
@@ -87,25 +86,25 @@ class GenerarQRView(LoginRequiredMixin, View):
                         descripcion=f'QR generado para placa {autorizacion.placa}'
                     )
                 except Exception:
-                    # No bloquear al usuario si falla historial
                     pass
                 
-                # Pasar datos a la plantilla (se renderiza en la misma petición POST)
+                # Pasar datos a la plantilla
                 context.update({
                     'qr_generado': True,
                     'qr_url': qr_url,
+                    'autorizacion_id': autorizacion.id,
                     'autorizacion_data': {
                         'placa': autorizacion.placa,
                         'nombres': autorizacion.usuario.nombres if autorizacion.usuario else '',
                         'numero_autorizacion': autorizacion.numero_autorizacion,
                         'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display() if hasattr(autorizacion, 'get_tipo_autorizacion_display') else '',
-                        'vigencia': autorizacion.vigencia,
+                        'vigencia': autorizacion.vigencia.strftime('%Y-%m-%d'),
                         'esta_caducada': getattr(autorizacion, 'esta_caducada', False),
                         'id': autorizacion.id,
                     }
                 })
                 
-                messages.success(request, '✅ QR generado exitosamente')
+                messages.success(request, 'QR generado exitosamente')
                 
             except Exception as e:
                 messages.error(request, f'Error al generar QR: {str(e)}')
@@ -117,6 +116,7 @@ class GenerarQRView(LoginRequiredMixin, View):
     def get_context_data(self, **kwargs):
         context = {
             'current_date': timezone.now().strftime('%d/%m/%Y, %H:%M'),
+            'qr_generado': False,  # Por defecto False
         }
         context.update(kwargs)
         return context

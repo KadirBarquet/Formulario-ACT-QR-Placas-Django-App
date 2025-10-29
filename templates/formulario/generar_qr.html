@@ -110,13 +110,24 @@
 </div>
 
 <script>
-// Variables globales
+// Variables globales - INICIALIZAR CORRECTAMENTE
 let currentPlaca = '{{ autorizacion_data.placa|default:"" }}';
-let currentData = {{ autorizacion_data|default:"{}"|safe }};
-let currentTipoAutorizacion = '{{ autorizacion_data.tipo_autorizacion|default:"" }}';
+let currentQrUrl = '{{ qr_url|default:"" }}';
+let currentData = {
+    placa: '{{ autorizacion_data.placa|default:"" }}',
+    nombres: '{{ autorizacion_data.nombres|default:"" }}',
+    numero_autorizacion: '{{ autorizacion_data.numero_autorizacion|default:"" }}',
+    tipo_autorizacion: '{{ autorizacion_data.tipo_autorizacion|default:"" }}',
+    vigencia: '{{ autorizacion_data.vigencia|default:"" }}'
+};
 
 // Inicialización cuando el DOM está listo
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM cargado');
+    console.log('QR Generado:', {{ qr_generado|default:False|lower }});
+    console.log('QR URL:', currentQrUrl);
+    console.log('Placa:', currentPlaca);
+    
     // Establecer fecha mínima como hoy
     const today = new Date().toISOString().split('T')[0];
     const vigenciaInput = document.getElementById('id_vigencia');
@@ -131,8 +142,12 @@ document.addEventListener('DOMContentLoaded', function() {
     mostrarInputAutorizacion();
     
     // Generar QR si ya hay datos
-    {% if qr_generado and autorizacion_data %}
-    generateQR();
+    {% if qr_generado and qr_url %}
+    console.log('Intentando generar QR...');
+    setTimeout(function() {
+        const success = generateQR();
+        console.log('QR generado:', success);
+    }, 100);
     {% endif %}
     
     // Agregar validación en tiempo real para campos numéricos
@@ -212,7 +227,6 @@ function mostrarInputAutorizacion() {
     const selectedOption = tipoSelect.options[tipoSelect.selectedIndex];
     const tipoTexto = selectedOption ? selectedOption.text.toLowerCase() : '';
     
-    // Si el tipo incluye "otro" u "otra", mostrar campo adicional
     if (tipoTexto.includes('otro') || tipoTexto.includes('otra')) {
         container.innerHTML = `
             <label for="id_tipo_autorizacion_otro">Especifique el tipo de autorización</label>
@@ -236,7 +250,6 @@ function agregarValidacionTiempoReal() {
             }
             this.value = valor;
             
-            // Validación visual
             if (valor.length === 10 && valor.startsWith('09')) {
                 this.classList.remove('invalid');
                 this.classList.add('valid');
@@ -267,7 +280,6 @@ function agregarValidacionTiempoReal() {
             }
             this.value = valor;
             
-            // Validación visual
             if (valor.length === 13) {
                 this.classList.remove('invalid');
                 this.classList.add('valid');
@@ -296,7 +308,6 @@ function agregarValidacionTiempoReal() {
             }
             this.value = valor;
             
-            // Validación visual
             if (valor.length === 10 && valor.startsWith('09')) {
                 this.classList.remove('invalid');
                 this.classList.add('valid');
@@ -329,12 +340,10 @@ document.getElementById('qr-form').addEventListener('submit', function(e) {
     let isValid = true;
     let errorMessage = '';
 
-    // Validar tipo de identificación
     if (!tipoIdentificacion) {
         isValid = false;
         errorMessage = 'Debe seleccionar un tipo de identificación.';
     } else {
-        // Validar campos de identificación según el tipo seleccionado
         if (tipoIdentificacion === 'cedula') {
             const cedula = document.getElementById('id_cedula');
             if (!cedula || !cedula.value.trim()) {
@@ -357,7 +366,7 @@ document.getElementById('qr-form').addEventListener('submit', function(e) {
             const ruc = document.getElementById('id_ruc');
             if (!ruc || !ruc.value.trim()) {
                 isValid = false;
-                errorMessage = 'El RUC es requerido para este tipo de identificación.';
+                errorMessage = 'El RUC es requerido cuando selecciona "RUC" como tipo de identificación.';
             } else {
                 const rucVal = ruc.value.trim();
                 if (rucVal.length !== 13) {
@@ -399,7 +408,6 @@ document.getElementById('qr-form').addEventListener('submit', function(e) {
         }
     }
     
-    // Validar teléfono
     if (isValid) {
         const telefono = document.getElementById('id_telefono');
         if (telefono && telefono.value.trim()) {
@@ -424,30 +432,38 @@ document.getElementById('qr-form').addEventListener('submit', function(e) {
         return;
     }
     
-    // Mostrar mensaje de procesamiento
     message.textContent = 'Procesando formulario...';
     message.className = 'success';
 });
 
-// Generar código QR
+// Generar código QR - CORREGIDO
 function generateQR() {
     const qrContainer = document.getElementById('qrcode');
-    if (!qrContainer) return false;
+    if (!qrContainer) {
+        console.error('No se encontró el contenedor del QR');
+        return false;
+    }
     
     qrContainer.innerHTML = '';
     
-    const qrUrl = '{{ qr_url|default:"" }}';
-    if (!qrUrl) return false;
+    const qrUrl = currentQrUrl || '{{ qr_url|default:"" }}';
+    console.log('Generando QR con URL:', qrUrl);
+    
+    if (!qrUrl) {
+        console.error('No hay URL para el QR');
+        return false;
+    }
     
     try {
         new QRCode(qrContainer, {
             text: qrUrl,
-            width: 200,
-            height: 200,
+            width: 256,
+            height: 256,
             colorDark: "#000000",
             colorLight: "#ffffff",
             correctLevel: QRCode.CorrectLevel.H
         });
+        console.log('QR generado exitosamente');
         return true;
     } catch (error) {
         console.error('Error generando QR:', error);
@@ -455,95 +471,119 @@ function generateQR() {
     }
 }
 
-// Descargar QR como PNG
+// Descargar QR como PNG - CORREGIDO
 function downloadQR() {
+    console.log('Intentando descargar QR...');
+    console.log('Placa actual:', currentPlaca);
+    
     if (!currentPlaca) {
-        alert('Primero genere un QR válido.');
+        alert('Error: No hay una placa válida. Por favor, genere primero un QR.');
         return;
     }
     
     const qrCanvas = document.querySelector('#qrcode canvas');
+    console.log('Canvas encontrado:', qrCanvas);
+    
     if (!qrCanvas) {
-        alert('No se encontró el QR para descargar.');
+        alert('No se encontró el QR para descargar. Por favor, genere primero el código QR.');
         return;
     }
     
-    const link = document.createElement('a');
-    link.download = `placa_${currentPlaca}.png`;
-    link.href = qrCanvas.toDataURL('image/png');
-    link.click();
+    try {
+        const link = document.createElement('a');
+        link.download = `QR_Placa_${currentPlaca}.png`;
+        link.href = qrCanvas.toDataURL('image/png');
+        link.click();
+        console.log('Descarga iniciada');
+    } catch (error) {
+        console.error('Error al descargar:', error);
+        alert('Error al descargar el QR: ' + error.message);
+    }
 }
 
-// Generar PDF
+// Generar PDF - CORREGIDO
 function generatePDF() {
-    if (!window.jspdf) {
+    console.log('Generando PDF...');
+    console.log('Datos actuales:', currentData);
+    
+    if (!currentData || !currentData.placa) {
+        alert('Error: No hay datos válidos para generar el PDF.');
+        return;
+    }
+    
+    if (!window.jspdf || !window.jspdf.jsPDF) {
         alert('Error: La librería jsPDF no está disponible.');
         return;
     }
     
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    
-    // Configurar fuente
-    doc.setFont("helvetica");
-    
-    // Encabezado
-    doc.setFontSize(18);
-    doc.setTextColor(0, 77, 153);
-    doc.text('AUTORIZACIÓN', 105, 25, { align: 'center' });
-    
-    // Línea separadora
-    doc.line(20, 35, 190, 35);
-    
-    // Resto del contenido en negro
-    doc.setTextColor(0, 0, 0);
-    
-    // Mensaje principal
-    doc.setFontSize(12);
-    const mensaje = `Estimado/a ${currentData.nombres}, este mensaje es para indicarle que se ha emitido la autorización correspondiente desde la Autoridad de Control de Tránsito Milagro (ACT).`;
-    
-    const margin = 20;
-    const maxWidth = 170;
-    const lines = doc.splitTextToSize(mensaje, maxWidth);
-    
-    let y = 50;
-    lines.forEach((line, index) => {
-        doc.text(line, margin, y + (index * 7));
-    });
-    
-    // Detalles de la autorización
-    let detailsY = y + (lines.length * 7) + 15;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-    doc.text('DETALLES DE LA AUTORIZACIÓN:', 20, detailsY);
-    
-    detailsY += 10;
-    doc.setFont("helvetica", "normal");
-    doc.text(`• Número de Documento: ${currentData.numero_autorizacion}`, 25, detailsY);
-    detailsY += 8;
-    doc.text(`• Placa: ${currentData.placa}`, 25, detailsY);
-    detailsY += 8;
-    doc.text(`• Nombres: ${currentData.nombres}`, 25, detailsY);
-    detailsY += 8;
-    doc.text(`• Tipo de Autorización: ${currentData.tipo_autorizacion}`, 25, detailsY);
-    detailsY += 8;
-    doc.text(`• Vigencia: ${currentData.vigencia}`, 25, detailsY);
-    
-    // Pie de página
-    doc.line(20, 260, 190, 260);
-    doc.setFontSize(8);
-    doc.text('EMOVIM-EP Ecuador', 105, 270, { align: 'center' });
-    doc.text('genercia@emovim-ep.gob.ec', 105, 275, { align: 'center' });
-    
-    // Fecha actual
-    const now = new Date();
-    doc.text(`Fecha de emisión: ${now.toLocaleDateString('es-EC')} ${now.toLocaleTimeString('es-EC')}`, 105, 285, { align: 'center' });
-    
-    // Descargar PDF
-    doc.save(`Autorizacion_${currentData.placa}_${currentData.nombres}.pdf`);
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Configurar fuente
+        doc.setFont("helvetica");
+        
+        // Encabezado
+        doc.setFontSize(18);
+        doc.setTextColor(0, 77, 153);
+        doc.text('AUTORIZACIÓN', 105, 25, { align: 'center' });
+        
+        // Línea separadora
+        doc.line(20, 35, 190, 35);
+        
+        doc.setTextColor(0, 0, 0);
+        
+        // Mensaje principal
+        doc.setFontSize(12);
+        const mensaje = `Estimado/a ${currentData.nombres}, este mensaje es para indicarle que se ha emitido la autorización correspondiente desde la Autoridad de Control de Tránsito Milagro (ACT).`;
+        
+        const margin = 20;
+        const maxWidth = 170;
+        const lines = doc.splitTextToSize(mensaje, maxWidth);
+        
+        let y = 50;
+        lines.forEach((line, index) => {
+            doc.text(line, margin, y + (index * 7));
+        });
+        
+        // Detalles de la autorización
+        let detailsY = y + (lines.length * 7) + 15;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        doc.text('DETALLES DE LA AUTORIZACIÓN:', 20, detailsY);
+        
+        detailsY += 10;
+        doc.setFont("helvetica", "normal");
+        doc.text(`• Número de Documento: ${currentData.numero_autorizacion}`, 25, detailsY);
+        detailsY += 8;
+        doc.text(`• Placa: ${currentData.placa}`, 25, detailsY);
+        detailsY += 8;
+        doc.text(`• Nombres: ${currentData.nombres}`, 25, detailsY);
+        detailsY += 8;
+        doc.text(`• Tipo de Autorización: ${currentData.tipo_autorizacion}`, 25, detailsY);
+        detailsY += 8;
+        doc.text(`• Vigencia: ${currentData.vigencia}`, 25, detailsY);
+        
+        // Pie de página
+        doc.line(20, 260, 190, 260);
+        doc.setFontSize(8);
+        doc.text('EMOVIM-EP Ecuador', 105, 270, { align: 'center' });
+        doc.text('genercia@emovim-ep.gob.ec', 105, 275, { align: 'center' });
+        
+        // Fecha actual
+        const now = new Date();
+        doc.text(`Fecha de emisión: ${now.toLocaleDateString('es-EC')} ${now.toLocaleTimeString('es-EC')}`, 105, 285, { align: 'center' });
+        
+        // Descargar PDF
+        doc.save(`Autorizacion_${currentData.placa}_${currentData.nombres.replace(/\s+/g, '_')}.pdf`);
+        console.log('PDF generado exitosamente');
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert('Error al generar PDF: ' + error.message);
+    }
 }
 
-// Event listeners para cambios dinámicos
+// Event listeners
 document.getElementById('id_tipo_identificacion').addEventListener('change', mostrarInputID);
 document.getElementById('id_tipo_autorizacion').addEventListener('change', mostrarInputAutorizacion);
 </script>
