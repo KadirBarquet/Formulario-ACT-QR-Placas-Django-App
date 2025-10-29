@@ -707,138 +707,207 @@ label {
     transform: translateY(-1px);
 }
 
-.download-btn {
-    background-color: #28a745;
-    margin-top: 10px;
-}
-
-.download-btn:hover {
-    background-color: #1e7e34;
-}
-
-.pdf-btn {
-    background-color: #dc3545;
-    margin-top: 10px;
-}
-
-.pdf-btn:hover {
-    background-color: #c82333;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-
-.action-buttons button {
-    flex: 1;
-    min-width: 200px;
-    padding: 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: 600;
-    transition: background-color 0.2s, transform 0.1s;
-}
-
+/* Estilos para centrar el QR */
 #qr-container {
     text-align: center;
+    padding: 30px;
+}
+
+#qr-container h3 {
+    color: #004d99;
+    margin-bottom: 20px;
+    font-size: 1.4em;
+    font-weight: 600;
 }
 
 #qrcode {
     margin: 20px auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 2px solid #dee2e6;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
-#result-message {
-    text-align: center;
-    margin: 15px 0;
-    padding: 10px;
-    border-radius: 4px;
+/* Centrar el canvas del QR */
+#qrcode canvas,
+#qrcode img {
+    display: block;
+    margin: 0 auto;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 25px;
+}
+
+.action-buttons button {
+    flex: 0 1 auto;
+    min-width: 220px;
+    padding: 14px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.download-btn {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.download-btn:hover {
+    background: linear-gradient(135deg, #218838, #1aa179);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+.pdf-btn {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.pdf-btn:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(220, 53, 69, 0.3);
+}
+
+#auth-details {
+    background: #f8f9fa;
+}
+
+#auth-details h3 {
+    color: #004d99;
+    margin-bottom: 20px;
+    font-size: 1.3em;
     font-weight: 600;
 }
 
-.error {
-    color: #dc3545;
-    background-color: #f8d7da;
-    border: 1px solid #f5c6cb;
-}
-
-.success {
-    color: #155724;
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-}
-
 #auth-details p {
-    margin: 8px 0;
-    padding-left: 10px;
-    border-left: 3px solid #004d99;
+    margin: 12px 0;
+    font-size: 1em;
+    color: #495057;
 }
 
 #auth-details strong {
-    color: #004d99;
+    color: #212529;
     font-weight: 600;
 }
 
 .expiration-message {
-    background-color: #ffebee;
-    border: 2px solid #f44336;
-    border-radius: 5px;
-    padding: 15px;
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 20px;
     margin-top: 20px;
     text-align: center;
 }
 
 .expiration-message h4 {
-    color: #d32f2f !important;
-    margin: 0;
+    color: #856404;
+    margin: 0 0 10px 0;
     font-size: 1.2em;
+}
+
+.expiration-message p {
+    color: #856404;
+    margin: 0;
 }
 
 .error-message {
     background-color: #f8d7da;
-    color: #721c24;
-    padding: 15px;
-    border-radius: 6px;
-    margin-bottom: 20px;
     border: 1px solid #f5c6cb;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 20px;
+    color: #721c24;
+}
+
+.error-message strong {
+    display: block;
+    margin-bottom: 8px;
 }
 
 .error-message ul {
-    margin: 10px 0 0 20px;
-    padding: 0;
+    margin: 10px 0 0 0;
+    padding-left: 20px;
 }
 
-/* Responsive */
+.error-message li {
+    margin: 5px 0;
+}
+
+#result-message {
+    margin-top: 15px;
+    padding: 12px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 600;
+}
+
+#result-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+#result-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Responsive para los botones */
 @media (max-width: 640px) {
-    .container {
-        padding: 20px;
-        border-radius: 0;
-        box-shadow: none;
-        border-top-width: 5px;
+    .action-buttons {
+        flex-direction: column;
     }
     
-    .card {
+    .action-buttons button {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    #qrcode {
         padding: 15px;
-    }
-    
-    h1 {
-        font-size: 1.6em;
     }
     
     .form-row-double {
         grid-template-columns: 1fr;
     }
     
-    .action-buttons {
-        flex-direction: column;
+    .container {
+        padding: 20px;
     }
-    
-    .action-buttons button {
-        min-width: auto;
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#qr-container,
+#auth-details {
+    animation: fadeIn 0.5s ease-out;
 }
 </style>
 {% endblock %}
