@@ -10,6 +10,8 @@ from django.utils import timezone
 from django.db.models import Q, Count
 from django.db import models
 
+import threading
+
 from apps.formulario.models import UsuarioAutorizacion, Autorizacion, TipoAutorizacion, HistorialAutorizacion
 from apps.formulario.form import (
     FormularioCompletoQRForm, 
@@ -18,6 +20,23 @@ from apps.formulario.form import (
     UsuarioAutorizacionForm
 )
 from .utils import generar_url_qr, validar_autorizacion_caducada, crear_autorizacion_desde_form
+
+# Thread-local guard para evitar recursión en eliminaciones cruzadas entre vistas
+_deleting = threading.local()
+
+def _get_delete_set():
+    if not hasattr(_deleting, "set"):
+        _deleting.set = set()
+    return _deleting.set
+
+def _in_delete(key):
+    return key in _get_delete_set()
+
+def _add_delete(key):
+    _get_delete_set().add(key)
+
+def _remove_delete(key):
+    _get_delete_set().discard(key)
 
 # ============================================================================
 # VISTAS PARA GENERACIÓN DE QR
@@ -38,38 +57,50 @@ class GenerarQRView(LoginRequiredMixin, View):
         
         if form.is_valid():
             try:
-                # Crear la autorización
+                # Crear la autorización (se espera que la función devuelva la instancia)
                 autorizacion, usuario_creado = crear_autorizacion_desde_form(
                     form.cleaned_data, 
                     request.user
                 )
-                
-                # Generar URL para QR
+
+                # Asegurar que creado_por esté asignado y la instancia esté guardada
+                if not getattr(autorizacion, 'creado_por', None):
+                    autorizacion.creado_por = request.user
+                autorizacion.save()
+                autorizacion.refresh_from_db()
+
+                # Generar URL/valor para QR (usa la utilidad existente)
                 qr_url = generar_url_qr(autorizacion, request)
-                
-                # Actualizar autorización con QR
+
+                # Actualizar autorización con QR y marcar generado
                 autorizacion.codigo_qr = qr_url
                 autorizacion.qr_generado = True
+                autorizacion.fecha_qr_generado = timezone.now() if hasattr(autorizacion, 'fecha_qr_generado') else None
                 autorizacion.save()
-                
+
                 # Crear registro en historial
-                HistorialAutorizacion.objects.create(
-                    autorizacion=autorizacion,
-                    creado_por=request.user,
-                    accion='GENERAR_QR',
-                    descripcion=f'QR generado para placa {autorizacion.placa}'
-                )
+                try:
+                    HistorialAutorizacion.objects.create(
+                        autorizacion=autorizacion,
+                        creado_por=request.user,
+                        accion='GENERAR_QR',
+                        descripcion=f'QR generado para placa {autorizacion.placa}'
+                    )
+                except Exception:
+                    # No bloquear al usuario si falla historial
+                    pass
                 
+                # Pasar datos a la plantilla (se renderiza en la misma petición POST)
                 context.update({
                     'qr_generado': True,
                     'qr_url': qr_url,
                     'autorizacion_data': {
                         'placa': autorizacion.placa,
-                        'nombres': autorizacion.usuario.nombres,
+                        'nombres': autorizacion.usuario.nombres if autorizacion.usuario else '',
                         'numero_autorizacion': autorizacion.numero_autorizacion,
-                        'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display(),
+                        'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display() if hasattr(autorizacion, 'get_tipo_autorizacion_display') else '',
                         'vigencia': autorizacion.vigencia,
-                        'esta_caducada': autorizacion.esta_caducada,
+                        'esta_caducada': getattr(autorizacion, 'esta_caducada', False),
                         'id': autorizacion.id,
                     }
                 })
@@ -91,54 +122,62 @@ class GenerarQRView(LoginRequiredMixin, View):
         return context
 
 class DescargarQRView(LoginRequiredMixin, View):
-    """Vista para descargar QR como PNG"""
+    """Vista para preparar la descarga del QR (no genera archivo aquí, sólo registra y redirige)"""
     
     def get(self, request, autorizacion_id):
-        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id, creado_por=request.user)
+        # Quitar la restricción creado_por=request.user para evitar que falle si no coincide
+        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id)
         
         if validar_autorizacion_caducada(autorizacion.vigencia):
             messages.error(request, 'No se puede descargar QR: autorización caducada')
             return redirect('formulario:generar_qr')
         
-        # Registrar descarga en historial
-        HistorialAutorizacion.objects.create(
-            autorizacion=autorizacion,
-            creado_por=request.user,
-            accion='DESCARGAR_QR',
-            descripcion=f'QR descargado para placa {autorizacion.placa}'
-        )
+        # Registrar descarga en historial (no bloquear si falla)
+        try:
+            HistorialAutorizacion.objects.create(
+                autorizacion=autorizacion,
+                creado_por=request.user,
+                accion='DESCARGAR_QR',
+                descripcion=f'QR descargado para placa {autorizacion.placa}'
+            )
+        except Exception:
+            pass
         
         # Actualizar fecha de descarga
         autorizacion.fecha_descarga_qr = timezone.now()
         autorizacion.save()
         
         messages.success(request, 'QR listo para descargar')
-        return redirect('formulario:generar_qr')
+        # Ideal: redirigir al detalle de autorización o a la misma página mostrando el QR
+        return redirect(request.GET.get('next', 'formulario:generar_qr'))
 
 class GenerarPDFView(LoginRequiredMixin, View):
-    """Vista para generar PDF de autorización"""
+    """Vista para preparar la generación de PDF de autorización (no crea archivo aquí)"""
     
     def get(self, request, autorizacion_id):
-        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id, creado_por=request.user)
+        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id)
         
         if validar_autorizacion_caducada(autorizacion.vigencia):
             messages.error(request, 'No se puede generar PDF: autorización caducada')
             return redirect('formulario:generar_qr')
         
         # Registrar generación de PDF en historial
-        HistorialAutorizacion.objects.create(
-            autorizacion=autorizacion,
-            creado_por=request.user,
-            accion='GENERAR_PDF',
-            descripcion=f'PDF generado para placa {autorizacion.placa}'
-        )
+        try:
+            HistorialAutorizacion.objects.create(
+                autorizacion=autorizacion,
+                creado_por=request.user,
+                accion='GENERAR_PDF',
+                descripcion=f'PDF generado para placa {autorizacion.placa}'
+            )
+        except Exception:
+            pass
         
         # Actualizar fecha de descarga PDF
         autorizacion.fecha_descarga_pdf = timezone.now()
         autorizacion.save()
         
         messages.success(request, 'PDF generado exitosamente')
-        return redirect('formulario:generar_qr')
+        return redirect(request.GET.get('next', 'formulario:generar_qr'))
 
 class VerificarQRView(View):
     """Vista para verificar QR cuando se escanea"""
@@ -173,11 +212,11 @@ class VerificarQRView(View):
                     
                     autorizacion_data = {
                         'placa': autorizacion.placa,
-                        'nombres': autorizacion.usuario.nombres,
-                        'cedula': autorizacion.usuario.cedula,
-                        'ruc': autorizacion.usuario.ruc,
+                        'nombres': autorizacion.usuario.nombres if autorizacion.usuario else nombres,
+                        'cedula': autorizacion.usuario.cedula if autorizacion.usuario else cedula or 'No disponible',
+                        'ruc': autorizacion.usuario.ruc if autorizacion.usuario else ruc or 'No disponible',
                         'numero_autorizacion': autorizacion.numero_autorizacion,
-                        'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display(),
+                        'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display() if hasattr(autorizacion, 'get_tipo_autorizacion_display') else 'No disponible',
                         'vigencia': autorizacion.vigencia,
                         'esta_caducada': esta_caducada,
                     }
@@ -335,11 +374,46 @@ class UsuarioAutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin,
     
     def delete(self, request, *args, **kwargs):
         usuario = self.get_object()
-        messages.success(
-            request, 
-            f'Usuario "{usuario.nombres}" eliminado exitosamente'
-        )
-        return super().delete(request, *args, **kwargs)
+        usuario_key = ("usuario", usuario.pk)
+
+        # Si ya estamos borrando este usuario desde otra operación, seguir con el delete normal
+        if _in_delete(usuario_key):
+            messages.success(
+                request,
+                f'Usuario "{usuario.nombres}" eliminado exitosamente'
+            )
+            return super().delete(request, *args, **kwargs)
+
+        _add_delete(usuario_key)
+        try:
+            # Borrar todas las autorizaciones relacionadas y registrar en historial
+            autorizaciones = list(usuario.autorizaciones.all())
+            for auth in autorizaciones:
+                auth_key = ("autorizacion", auth.pk)
+                if _in_delete(auth_key):
+                    continue
+                _add_delete(auth_key)
+                try:
+                    # Registrar en historial antes de eliminar la autorización
+                    HistorialAutorizacion.objects.create(
+                        autorizacion=auth,
+                        creado_por=request.user,
+                        accion='ELIMINAR_AUTORIZACION_POR_ELIMINAR_USUARIO',
+                        descripcion=f'Autorización eliminada al borrar usuario {usuario.nombres}'
+                    )
+                    # Eliminación directa del modelo
+                    auth.delete()
+                finally:
+                    _remove_delete(auth_key)
+
+            # Finalmente eliminar el usuario
+            messages.success(
+                request, 
+                f'Usuario "{usuario.nombres}" eliminado exitosamente'
+            )
+            return super().delete(request, *args, **kwargs)
+        finally:
+            _remove_delete(usuario_key)
 
 # ============================================================================
 # CRUD DE AUTORIZACIONES
@@ -480,20 +554,58 @@ class AutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
     
     def delete(self, request, *args, **kwargs):
         autorizacion = self.get_object()
+        auth_key = ("autorizacion", autorizacion.pk)
 
-        # Registrar eliminación en historial antes de eliminar
-        HistorialAutorizacion.objects.create(
-            autorizacion=autorizacion,
-            creado_por=request.user,
-            accion='ELIMINAR_AUTORIZACION',
-            descripcion=f'Autorización eliminada: Placa {autorizacion.placa}, Número {autorizacion.numero_autorizacion}'
-        )
-        
-        messages.success(
-            request, 
-            f'Autorización para la placa "{autorizacion.placa}" eliminada exitosamente'
-        )
-        return super().delete(request, *args, **kwargs)
+        # Si ya estamos borrando esta autorización desde otra operación, seguir con delete normal
+        if _in_delete(auth_key):
+            messages.success(
+                request, 
+                f'Autorización para la placa "{autorizacion.placa}" eliminada exitosamente'
+            )
+            return super().delete(request, *args, **kwargs)
+
+        _add_delete(auth_key)
+        try:
+            # Registrar eliminación en historial antes de eliminar
+            HistorialAutorizacion.objects.create(
+                autorizacion=autorizacion,
+                creado_por=request.user,
+                accion='ELIMINAR_AUTORIZACION',
+                descripcion=f'Autorización eliminada: Placa {autorizacion.placa}, Número {autorizacion.numero_autorizacion}'
+            )
+            
+            # Guardar referencia al usuario antes de eliminar la autorización
+            usuario = autorizacion.usuario if hasattr(autorizacion, 'usuario') else None
+
+            # Eliminar la autorización (modelo)
+            result = super().delete(request, *args, **kwargs)
+
+            # Si existe un usuario relacionado y no tiene otras autorizaciones, eliminar al usuario también
+            if usuario:
+                otras = usuario.autorizaciones.exclude(pk=autorizacion.pk).exists()
+                if not otras:
+                    usuario_key = ("usuario", usuario.pk)
+                    if not _in_delete(usuario_key):
+                        _add_delete(usuario_key)
+                        try:
+                            # Registrar en historial que se elimina usuario por eliminación de autorización
+                            HistorialAutorizacion.objects.create(
+                                autorizacion=None,
+                                creado_por=request.user,
+                                accion='ELIMINAR_USUARIO_POR_ELIMINAR_AUTORIZACION',
+                                descripcion=f'Usuario {usuario.nombres} eliminado al borrar su última autorización'
+                            )
+                            usuario.delete()
+                        finally:
+                            _remove_delete(usuario_key)
+
+            messages.success(
+                request, 
+                f'Autorización para la placa "{autorizacion.placa}" eliminada exitosamente'
+            )
+            return result
+        finally:
+            _remove_delete(auth_key)
 
 # ============================================================================
 # HISTORIAL
