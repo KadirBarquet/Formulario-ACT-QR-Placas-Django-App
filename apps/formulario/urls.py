@@ -23,6 +23,11 @@ urlpatterns = [
     path('autorizaciones/<int:pk>/editar/', views.AutorizacionUpdateView.as_view(), name='autorizacion_update'),
     path('autorizaciones/<int:pk>/eliminar/', views.AutorizacionDeleteView.as_view(), name='autorizacion_delete'),
     
+    # Nuevas rutas para mostrar QR y descargar PDF
+    path('autorizaciones/<int:autorizacion_id>/mostrar-qr/', views.MostrarQRView.as_view(), name='mostrar_qr'),
+    path('autorizaciones/<int:autorizacion_id>/descargar-qr/', views.DescargarQRAutorizacionView.as_view(), name='descargar_qr_autorizacion'),
+    path('autorizaciones/<int:autorizacion_id>/descargar-pdf/', views.DescargarPDFAutorizacionView.as_view(), name='descargar_pdf_autorizacion'),
+    
     # Historial
     path('historial/', views.HistorialListView.as_view(), name='historial_list'),
     

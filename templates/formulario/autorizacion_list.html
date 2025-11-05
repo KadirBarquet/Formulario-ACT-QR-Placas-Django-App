@@ -112,6 +112,9 @@
                     <td>{{ auth.fecha_creacion|date:"d/m/Y H:i" }}</td>
                     <td>
                         <div class="action-buttons">
+                            <a href="{% url 'formulario:mostrar_qr' auth.pk %}" class="btn-icon btn-qr" title="Ver QR">
+                                📱
+                            </a>
                             <a href="{% url 'formulario:autorizacion_detail' auth.pk %}" class="btn-icon" title="Ver detalles">
                                 👁️
                             </a>
@@ -511,6 +514,20 @@
 .empty-state .btn-primary {
     padding: 12px 25px;
     font-size: 1em;
+}
+
+/* Estilo especial para el botón de QR */
+.btn-icon.btn-qr {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border: none;
+}
+
+.btn-icon.btn-qr:hover {
+    background: linear-gradient(135deg, #218838, #1aa179);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
 }
 
 /* Responsive */

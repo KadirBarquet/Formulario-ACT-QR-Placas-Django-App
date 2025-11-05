@@ -14,6 +14,12 @@
         <div class="card-header">
             <h2>Información de la Autorización</h2>
             <div class="header-actions">
+                <a href="{% url 'formulario:mostrar_qr' autorizacion.pk %}" class="btn-success">
+                    📱 Ver QR
+                </a>
+                <a href="{% url 'formulario:descargar_pdf_autorizacion' autorizacion.pk %}" class="btn-danger">
+                    📄 Descargar PDF
+                </a>
                 <a href="{% url 'formulario:autorizacion_update' autorizacion.pk %}" class="btn-primary">
                     ✏️ Editar
                 </a>
@@ -354,6 +360,52 @@
     background: #545b62;
     color: white;
     text-decoration: none;
+}
+
+.btn-success {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838, #1aa179);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
 }
 
 /* Responsive */

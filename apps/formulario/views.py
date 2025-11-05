@@ -607,6 +607,101 @@ class AutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
         finally:
             _remove_delete(auth_key)
 
+# Vista para boton para visualizar y descargar como png el QR de autorizacion generado
+class MostrarQRView(LoginRequiredMixin, View):
+    """Vista para mostrar el QR de una autorización existente"""
+    template_name = 'formulario/mostrar_qr.html'
+
+    def get(self, request, autorizacion_id):
+        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id)
+        
+        # Generar URL del QR si no existe
+        if not autorizacion.codigo_qr:
+            qr_url = generar_url_qr(autorizacion, request)
+            autorizacion.codigo_qr = qr_url
+            autorizacion.qr_generado = True
+            autorizacion.save()
+        
+        context = {
+            'autorizacion': autorizacion,
+            'qr_url': autorizacion.codigo_qr,
+            'autorizacion_data': {
+                'placa': autorizacion.placa,
+                'nombres': autorizacion.usuario.nombres if autorizacion.usuario else '',
+                'numero_autorizacion': autorizacion.numero_autorizacion,
+                'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display(),
+                'vigencia': autorizacion.vigencia.strftime('%Y-%m-%d'),
+                'esta_caducada': autorizacion.esta_caducada,
+            },
+            'current_date': timezone.now().strftime('%d/%m/%Y, %H:%M'),
+        }
+
+        return render(request, self.template_name, context)
+
+class DescargarQRAutorizacionView(LoginRequiredMixin, View):
+    """Vista para registrar la descarga del QR"""
+    
+    def get(self, request, autorizacion_id):
+        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id)
+
+        # Registrar descarga en historial
+        try:
+            HistorialAutorizacion.objects.create(
+                autorizacion=autorizacion,
+                creado_por=request.user,
+                accion='DESCARGAR_QR',
+                descripcion=f'QR descargado para placa {autorizacion.placa}'
+            )
+        except Exception as e:
+            print(f'Error: {e}') # 
+        
+        # Actualizar fecha de descarga
+        autorizacion.fecha_descarga_qr = timezone.now()
+        autorizacion.save()
+        
+        messages.success(request, 'QR descargado exitosamente')
+        return redirect('formulario:mostrar_qr', autorizacion_id=autorizacion_id)
+
+class DescargarPDFAutorizacionView(LoginRequiredMixin, View):
+    """Vista para preparar la descarga del PDF de autorización"""
+    
+    def get(self, request, autorizacion_id):
+        autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id)
+        
+        # Registrar generación de PDF en historial
+        try:
+            HistorialAutorizacion.objects.create(
+                autorizacion=autorizacion,
+                creado_por=request.user,
+                accion='DESCARGAR_PDF',
+                descripcion=f'PDF descargado para placa {autorizacion.placa}'
+            )
+        except Exception as e:
+            print(f'Error: {e}')
+        
+        # Actualizar fecha de descarga PDF
+        autorizacion.fecha_descarga_pdf = timezone.now()
+        autorizacion.save()
+        
+        # Preparar datos para la plantilla
+        context = {
+            'autorizacion': autorizacion,
+            'autorizacion_data': {
+                'placa': autorizacion.placa,
+                'nombres': autorizacion.usuario.nombres if autorizacion.usuario else '',
+                'numero_autorizacion': autorizacion.numero_autorizacion,
+                'tipo_autorizacion': autorizacion.get_tipo_autorizacion_display(),
+                'vigencia': autorizacion.vigencia.strftime('%Y-%m-%d'),
+                'cedula': autorizacion.usuario.cedula if autorizacion.usuario else '',
+                'ruc': autorizacion.usuario.ruc if autorizacion.usuario else '',
+                'correo': autorizacion.usuario.correo if autorizacion.usuario else '',
+                'telefono': autorizacion.usuario.telefono if autorizacion.usuario else '',
+            },
+            'current_date': timezone.now().strftime('%d/%m/%Y, %H:%M'),
+        }
+        
+        return render(request, 'formulario/descargar_pdf.html', context)
+
 # ============================================================================
 # HISTORIAL
 # ============================================================================

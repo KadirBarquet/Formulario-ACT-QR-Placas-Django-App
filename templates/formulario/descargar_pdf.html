@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Descargar PDF - {{ autorizacion.placa }}{% endblock %}
+
+{% block content %}
+<div class="pdf-download-container">
+    <div class="pdf-header">
+        <h1>📄 Generar PDF de Autorización</h1>
+        <p>Placa: <strong>{{ autorizacion.placa }}</strong></p>
+    </div>
+
+    <div class="pdf-card">
+        <div class="pdf-preview-section">
+            <h3>Vista Previa del Documento</h3>
+            <div class="document-preview">
+                <div class="preview-header">
+                    <img src="{% static 'img/Logo_ACT.png' %}" alt="ACT Logo" class="preview-logo">
+                    <h2>AUTORIZACIÓN</h2>
+                    <p class="preview-subtitle">Autoridad de Control de Tránsito - Milagro</p>
+                </div>
+
+                <div class="preview-body">
+                    <p class="preview-message">
+                        Estimado/a <strong>{{ autorizacion_data.nombres }}</strong>, este mensaje es para indicarle 
+                        que se ha emitido la autorización correspondiente desde la Autoridad de Control de 
+                        Tránsito Milagro (ACT).
+                    </p>
+
+                    <div class="preview-details">
+                        <h4>DETALLES DE LA AUTORIZACIÓN:</h4>
+                        <ul>
+                            <li><strong>Número de Documento:</strong> {{ autorizacion_data.numero_autorizacion }}</li>
+                            <li><strong>Placa:</strong> {{ autorizacion_data.placa }}</li>
+                            <li><strong>Nombres:</strong> {{ autorizacion_data.nombres }}</li>
+                            <li><strong>Tipo de Autorización:</strong> {{ autorizacion_data.tipo_autorizacion }}</li>
+                            <li><strong>Vigencia:</strong> {{ autorizacion_data.vigencia }}</li>
+                        </ul>
+                    </div>
+
+                    <div class="preview-footer">
+                        <p><strong>EMOVIM-EP Ecuador</strong></p>
+                        <p>genercia@emovim-ep.gob.ec</p>
+                        <p>Fecha de emisión: {{ current_date }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pdf-actions">
+            <button onclick="generarPDF()" class="btn-generate-pdf">
+                📥 Descargar PDF
+            </button>
+            <a href="{% url 'formulario:autorizacion_detail' autorizacion.pk %}" class="btn-back">
+                ← Volver al Detalle
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Datos de la autorización
+const autorizacionData = {
+    placa: '{{ autorizacion_data.placa }}',
+    nombres: '{{ autorizacion_data.nombres }}',
+    numero_autorizacion: '{{ autorizacion_data.numero_autorizacion }}',
+    tipo_autorizacion: '{{ autorizacion_data.tipo_autorizacion }}',
+    vigencia: '{{ autorizacion_data.vigencia }}',
+};
+
+function generarPDF() {
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert('Error: La librería jsPDF no está disponible.');
+        return;
+    }
+    
+    try {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        // Configurar fuente
+        doc.setFont("helvetica");
+        
+        // Encabezado
+        doc.setFontSize(20);
+        doc.setTextColor(0, 77, 153);
+        doc.text('AUTORIZACIÓN', 105, 25, { align: 'center' });
+        
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Autoridad de Control de Tránsito - Milagro', 105, 32, { align: 'center' });
+        
+        // Línea separadora
+        doc.setDrawColor(0, 77, 153);
+        doc.setLineWidth(0.5);
+        doc.line(20, 38, 190, 38);
+        
+        // Contenido
+        doc.setTextColor(0, 0, 0);
+        doc.setFontSize(12);
+        
+        const mensaje = `Estimado/a ${autorizacionData.nombres}, este mensaje es para indicarle que se ha emitido la autorización correspondiente desde la Autoridad de Control de Tránsito Milagro (ACT).`;
+        
+        const margin = 20;
+        const maxWidth = 170;
+        const lines = doc.splitTextToSize(mensaje, maxWidth);
+        
+        let y = 50;
+        lines.forEach((line, index) => {
+            doc.text(line, margin, y + (index * 7));
+        });
+        
+        // Detalles de la autorización
+        let detailsY = y + (lines.length * 7) + 15;
+        doc.setFontSize(13);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 77, 153);
+        doc.text('DETALLES DE LA AUTORIZACIÓN:', 20, detailsY);
+        
+        detailsY += 12;
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(0, 0, 0);
+        
+        const detalles = [
+            `• Número de Documento: ${autorizacionData.numero_autorizacion}`,
+            `• Placa: ${autorizacionData.placa}`,
+            `• Nombres: ${autorizacionData.nombres}`,
+        ];
+        
+        if (autorizacionData.ruc) {
+            detalles.push(`• RUC: ${autorizacionData.ruc}`);
+        }
+        
+        detalles.push(
+            `• Tipo de Autorización: ${autorizacionData.tipo_autorizacion}`,
+            `• Vigencia: ${autorizacionData.vigencia}`
+        );
+        
+        detalles.forEach((detalle, index) => {
+            doc.text(detalle, 25, detailsY + (index * 8));
+        });
+        
+        // Pie de página
+        doc.setDrawColor(0, 77, 153);
+        doc.setLineWidth(0.3);
+        doc.line(20, 260, 190, 260);
+        
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(0, 77, 153);
+        doc.text('EMOVIM-EP Ecuador', 105, 268, { align: 'center' });
+        
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Av. Simón Bolívar y Juan Montalvo | Milagro, Ecuador', 105, 273, { align: 'center' });
+        doc.text('genercia@emovim-ep.gob.ec', 105, 278, { align: 'center' });
+        
+        // Fecha actual
+        const now = new Date();
+        const fechaEmision = `Fecha de emisión: ${now.toLocaleDateString('es-EC')} ${now.toLocaleTimeString('es-EC')}`;
+        doc.text(fechaEmision, 105, 285, { align: 'center' });
+        
+        // Descargar PDF
+        const nombreArchivo = `Autorizacion_${autorizacionData.placa}_${autorizacionData.nombres.replace(/\s+/g, '_')}.pdf`;
+        doc.save(nombreArchivo);
+        
+        console.log('PDF generado exitosamente:', nombreArchivo);
+        
+        // Mostrar mensaje de éxito
+        mostrarMensaje('✅ PDF descargado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error al generar PDF:', error);
+        alert('Error al generar PDF: ' + error.message);
+    }
+}
+
+function mostrarMensaje(texto, tipo) {
+    const mensajeDiv = document.createElement('div');
+    mensajeDiv.className = `mensaje-flotante ${tipo}`;
+    mensajeDiv.textContent = texto;
+    document.body.appendChild(mensajeDiv);
+    
+    setTimeout(() => {
+        mensajeDiv.style.opacity = '0';
+        setTimeout(() => mensajeDiv.remove(), 300);
+    }, 3000);
+}
+</script>
+
+<style>
+.pdf-download-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.pdf-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 3px solid #004d99;
+}
+
+.pdf-header h1 {
+    color: #004d99;
+    margin-bottom: 10px;
+    font-size: 2em;
+}
+
+.pdf-header p {
+    color: #6c757d;
+    font-size: 1.2em;
+    margin: 0;
+}
+
+.pdf-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 30px;
+}
+
+.pdf-preview-section h3 {
+    color: #004d99;
+    margin-bottom: 20px;
+    font-size: 1.3em;
+}
+
+.document-preview {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    padding: 30px;
+    margin-bottom: 30px;
+}
+
+.preview-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #004d99;
+}
+
+.preview-logo {
+    max-width: 100px;
+    margin-bottom: 15px;
+}
+
+.preview-header h2 {
+    color: #004d99;
+    margin: 10px 0;
+    font-size: 1.8em;
+}
+
+.preview-subtitle {
+    color: #6c757d;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+.preview-body {
+    padding: 20px 0;
+}
+
+.preview-message {
+    color: #495057;
+    font-size: 1em;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    text-align: justify;
+}
+
+.preview-details {
+    background: white;
+    padding: 20px;
+    border-radius: 6px;
+    border-left: 4px solid #004d99;
+    margin-bottom: 25px;
+}
+
+.preview-details h4 {
+    color: #004d99;
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+}
+
+.preview-details ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.preview-details li {
+    padding: 8px 0;
+    color: #495057;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.preview-details li:last-child {
+    border-bottom: none;
+}
+
+.preview-details strong {
+    color: #212529;
+}
+
+.preview-footer {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+.preview-footer p {
+    margin: 5px 0;
+}
+
+.pdf-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn-generate-pdf,
+.btn-back {
+    padding: 14px 30px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1em;
+}
+
+.btn-generate-pdf {
+    background: linear-gradient(135deg, #dc3545, #c82333);
+    color: white;
+}
+
+.btn-generate-pdf:hover {
+    background: linear-gradient(135deg, #c82333, #bd2130);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+}
+
+.btn-back {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-back:hover {
+    background: #545b62;
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+/* Mensaje flotante */
+.mensaje-flotante {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    font-weight: 600;
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+    transition: opacity 0.3s ease;
+}
+
+.mensaje-flotante.success {
+    background: #d4edda;
+    color: #155724;
+    border: 2px solid #c3e6cb;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .pdf-download-container {
+        padding: 15px;
+    }
+    
+    .pdf-card {
+        padding: 20px;
+    }
+    
+    .document-preview {
+        padding: 20px;
+    }
+    
+    .pdf-actions {
+        flex-direction: column;
+    }
+    
+    .btn-generate-pdf,
+    .btn-back {
+        width: 100%;
+        text-align: center;
+    }
+}
+</style>
+{% endblock %}
