@@ -40,5 +40,10 @@ class HistorialListView(LoginRequiredMixin, ListView):
         context['acciones'] = HistorialAutorizacion.objects.values_list(
             'accion', flat=True
         ).distinct()
+        context['total_acciones'] = HistorialAutorizacion.objects.count()
+        context['total_autorizaciones_generadas'] = HistorialAutorizacion.objects.filter(accion='GENERAR_AUTORIZACION').count()
+        context['total_qrs_generados'] = HistorialAutorizacion.objects.filter(accion='GENERAR_QR').count()
+        context['total_pdfs_generados'] = HistorialAutorizacion.objects.filter(accion='GENERAR_PDF').count()
+        context['total_actualizaciones'] = HistorialAutorizacion.objects.filter(accion='ACTUALIZAR_AUTORIZACION').count()
         context['current_date'] = timezone.now().strftime('%d/%m/%Y, %H:%M')
-        return context
+        return context 

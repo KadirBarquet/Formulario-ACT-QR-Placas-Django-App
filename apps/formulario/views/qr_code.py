@@ -146,7 +146,7 @@ class GenerarPDFView(LoginRequiredMixin, View):
         autorizacion.save()
         
         messages.success(request, 'PDF generado exitosamente')
-        return redirect(request.GET.get('next', 'formulario:generar_qr'))
+        return redirect(request.GET.get('next', 'formulario:generar_qr')) 
 
 class VerificarQRView(View):
     """Vista para verificar QR cuando se escanea"""

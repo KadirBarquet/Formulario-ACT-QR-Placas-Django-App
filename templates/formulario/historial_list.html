@@ -65,28 +65,35 @@
         <div class="stat-item">
             <div class="stat-icon">📊</div>
             <div class="stat-content">
-                <span class="stat-number">{{ historial.paginator.count }}</span>
+                <span class="stat-number">{{ total_acciones }}</span>
                 <span class="stat-label">Total Registros</span>
             </div>
         </div>
+        <div class="stat-item" title="Total de autorizaciones generadas">
+            <div class="stat-icon">📱</div>
+            <div class="stat-content">
+                <span class="stat-number">{{ total_autorizaciones_generadas|default:0 }}</span>
+                <span class="stat-label">Autorizaciones Generadas</span>
+            </div>
+        </div> 
         <div class="stat-item">
             <div class="stat-icon">📱</div>
             <div class="stat-content">
-                <span class="stat-number">{{ acciones_count.generar_qr|default:0 }}</span>
+                <span class="stat-number">{{ total_qrs_generados|default:0 }}</span>
                 <span class="stat-label">QR Generados</span>
             </div>
         </div>
         <div class="stat-item">
             <div class="stat-icon">📄</div>
             <div class="stat-content">
-                <span class="stat-number">{{ acciones_count.generar_pdf|default:0 }}</span>
+                <span class="stat-number">{{ total_pdfs_generados|default:0 }}</span>
                 <span class="stat-label">PDF Generados</span>
             </div>
         </div>
         <div class="stat-item">
             <div class="stat-icon">✏️</div>
             <div class="stat-content">
-                <span class="stat-number">{{ acciones_count.actualizar_autorizacion|default:0 }}</span>
+                <span class="stat-number">{{ total_actualizaciones|default:0 }}</span>
                 <span class="stat-label">Actualizaciones</span>
             </div>
         </div>
