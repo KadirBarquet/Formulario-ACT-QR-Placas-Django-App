@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.formulario.views import historial, home, usuario_autorizacion, autorizacion, qr_code
+from apps.formulario.views import historial_acciones, home, usuario_autorizacion, autorizacion, qr_code
 
 app_name = 'formulario'
 
@@ -29,7 +29,9 @@ urlpatterns = [
     path('autorizaciones/<int:autorizacion_id>/descargar-pdf/', qr_code.DescargarPDFAutorizacionView.as_view(), name='descargar_pdf_autorizacion'),
     
     # Historial
-    path('historial/', historial.HistorialListView.as_view(), name='historial_list'),
+    path('historial/', historial_acciones.HistorialListView.as_view(), name='historial_list'),
+    path('historial/vaciar/', historial_acciones.VaciarHistorialView.as_view(), name='vaciar_historial'),
+    path('historial/eliminar/', historial_acciones.EliminarHistorialSeleccionadoView.as_view(), name='eliminar_historial_seleccionado'),
     
     # API y utilidades
     path('api/tipos-autorizacion/', home.GetTiposAutorizacionAPIView.as_view(), name='get_tipos_autorizacion'),
