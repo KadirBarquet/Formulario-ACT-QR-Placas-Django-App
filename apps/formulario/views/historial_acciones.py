@@ -58,7 +58,7 @@ class HistorialListView(LoginRequiredMixin, ListView):
         
         # Actualizaciones - Contar todas las acciones de actualización en el historial
         context['total_actualizaciones'] = HistorialAutorizacion.objects.filter(
-            accion='ACTUALIZAR_AUTORIZACION'
+            accion__in=['ACTUALIZAR_AUTORIZACION', 'ACTUALIZAR_USUARIO']
         ).count()
         
         context['current_date'] = timezone.now().strftime('%d/%m/%Y, %H:%M')

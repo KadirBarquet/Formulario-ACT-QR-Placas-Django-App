@@ -68,19 +68,6 @@
             </div>
         </div>
 
-        {% if object %}
-        <div class="form-section">
-            <h3>⚙️ Configuración</h3>
-            <div class="form-row">
-                <div class="form-group checkbox-group">
-                    {{ form.activo }}
-                    <label for="id_activo">Usuario activo</label>
-                    <small class="form-text">Desmarque para desactivar este usuario</small>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
         <div class="form-actions">
             <button type="submit" class="btn-primary">
                 {% if object %}💾 Guardar Cambios{% else %}👥 Crear Usuario{% endif %}

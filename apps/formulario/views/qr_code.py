@@ -46,15 +46,25 @@ class GenerarQRView(LoginRequiredMixin, View):
                 autorizacion.qr_generado = True
                 autorizacion.save()
 
-                # Crear registro en historial
+                # Crear registros en historial (QR y PDF)
                 try:
+                    # Registrar generación de QR
                     HistorialAutorizacion.objects.create(
                         autorizacion=autorizacion,
                         creado_por=request.user,
                         accion='GENERAR_QR',
                         descripcion=f'QR generado para placa {autorizacion.placa}'
                     )
-                except Exception:
+                    
+                    # Registrar generación de PDF
+                    HistorialAutorizacion.objects.create(
+                        autorizacion=autorizacion,
+                        creado_por=request.user,
+                        accion='GENERAR_PDF',
+                        descripcion=f'PDF de autorización preparado para placa {autorizacion.placa}'
+                    )
+                except Exception as e:
+                    print(f'Error al registrar en historial: {e}')
                     pass
                 
                 # Pasar datos a la plantilla
@@ -130,13 +140,13 @@ class GenerarPDFView(LoginRequiredMixin, View):
             messages.error(request, 'No se puede generar PDF: autorización caducada')
             return redirect('formulario:generar_qr')
         
-        # Registrar generación de PDF en historial
+        # Registrar descarga de PDF en historial
         try:
             HistorialAutorizacion.objects.create(
                 autorizacion=autorizacion,
                 creado_por=request.user,
-                accion='GENERAR_PDF',
-                descripcion=f'PDF generado para placa {autorizacion.placa}'
+                accion='DESCARGAR_PDF',
+                descripcion=f'PDF descargado para placa {autorizacion.placa}'
             )
         except Exception:
             pass
@@ -294,7 +304,7 @@ class DescargarPDFAutorizacionView(LoginRequiredMixin, View):
     def get(self, request, autorizacion_id):
         autorizacion = get_object_or_404(Autorizacion, id=autorizacion_id)
         
-        # Registrar generación de PDF en historial
+        # Registrar descarga de PDF en historial
         try:
             HistorialAutorizacion.objects.create(
                 autorizacion=autorizacion,

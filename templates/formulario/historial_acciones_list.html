@@ -25,7 +25,7 @@
     <div class="filters-card">
         <div class="filter-header">
             <h3>Filtrar Historial</h3>
-            <span class="filter-count">{{ historial.paginator.count }} registros encontrados</span>
+            <span class="filter-count">{{ total_acciones }} registros encontrados</span>
         </div>
         <form method="get" class="filter-form">
             <div class="form-row">
@@ -147,7 +147,10 @@
                                     Descargar PDF
                                 {% elif item.accion == 'ACTUALIZAR_AUTORIZACION' %}
                                     <span class="action-icon">✏️</span>
-                                    Actualizar
+                                    Actualizar Autorización
+                                {% elif item.accion == 'ACTUALIZAR_USUARIO' %}
+                                    <span class="action-icon">✏️</span>
+                                    Actualizar Usuario
                                 {% else %}
                                     <span class="action-icon">📝</span>
                                     {{ item.accion }}
