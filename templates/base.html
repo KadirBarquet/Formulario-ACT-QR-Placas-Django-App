@@ -74,6 +74,12 @@
                         Historial de Acciones
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{% url 'formulario:historial_autorizaciones_list' %}" class="nav-link {% if request.resolver_match.url_name == 'historial_autorizaciones_list' %}active{% endif %}">
+                        <span class="nav-icon">📊</span>
+                        Historial de Autorizaciones
+                    </a>
+                </li>
             </ul>
         </div>
     </nav>
