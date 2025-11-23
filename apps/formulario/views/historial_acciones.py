@@ -11,7 +11,7 @@ from django.http import JsonResponse
 # HISTORIAL DE ACCIONES
 # ============================================================================
 
-class HistorialListView(LoginRequiredMixin, ListView):
+class HistorialAccionesListView(LoginRequiredMixin, ListView):
     """Lista de todo el historial del sistema"""
     model = HistorialAcciones
     template_name = 'formulario/historial_acciones_list.html'
@@ -65,7 +65,7 @@ class HistorialListView(LoginRequiredMixin, ListView):
         return context
 
 
-class VaciarHistorialView(LoginRequiredMixin, View):
+class VaciarHistorialAccionesView(LoginRequiredMixin, View):
     """Vista para vaciar todo el historial"""
     
     def post(self, request, *args, **kwargs):
@@ -84,10 +84,10 @@ class VaciarHistorialView(LoginRequiredMixin, View):
                 f'Error al vaciar el historial: {str(e)}'
             )
         
-        return redirect('formulario:historial_list')
+        return redirect('formulario:historial_acciones_list')
 
 
-class EliminarHistorialSeleccionadoView(LoginRequiredMixin, View):
+class EliminarHistorialAccionesSeleccionadoView(LoginRequiredMixin, View):
     """Vista para eliminar registros seleccionados del historial"""
     
     def post(self, request, *args, **kwargs):

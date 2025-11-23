@@ -28,10 +28,10 @@ urlpatterns = [
     path('autorizaciones/<int:autorizacion_id>/descargar-qr/', qr_code.DescargarQRAutorizacionView.as_view(), name='descargar_qr_autorizacion'),
     path('autorizaciones/<int:autorizacion_id>/descargar-pdf/', qr_code.DescargarPDFAutorizacionView.as_view(), name='descargar_pdf_autorizacion'),
     
-    # Historial
-    path('historial/', historial_acciones.HistorialListView.as_view(), name='historial_list'),
-    path('historial/vaciar/', historial_acciones.VaciarHistorialView.as_view(), name='vaciar_historial'),
-    path('historial/eliminar/', historial_acciones.EliminarHistorialSeleccionadoView.as_view(), name='eliminar_historial_seleccionado'),
+    # Historial Acciones
+    path('historial_acciones/', historial_acciones.HistorialAccionesListView.as_view(), name='historial_acciones_list'),
+    path('historial_acciones/vaciar/', historial_acciones.VaciarHistorialAccionesView.as_view(), name='vaciar_historial_acciones'),
+    path('historial_acciones/eliminar/', historial_acciones.EliminarHistorialAccionesSeleccionadoView.as_view(), name='eliminar_historial_acciones_seleccionado'),
     
     # API y utilidades
     path('api/tipos-autorizacion/', home.GetTiposAutorizacionAPIView.as_view(), name='get_tipos_autorizacion'),
