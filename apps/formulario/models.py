@@ -210,7 +210,9 @@ class HistorialAutorizacion(AuditoriaModel):
     autorizacion = models.ForeignKey(
         Autorizacion,
         on_delete=models.CASCADE,
-        related_name='historial'
+        related_name='historial',
+        null=True,
+        blank=True
     )
     accion = models.CharField('Acción', max_length=50)
     descripcion = models.TextField('Descripción')
