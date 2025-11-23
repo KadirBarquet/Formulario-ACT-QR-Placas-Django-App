@@ -93,12 +93,12 @@
 
     <!-- Lista de historial -->
     <div class="table-card">
-        {% if historial %}
+        {% if historial_acciones %}
         <div class="table-header">
             <h3>Registros de Actividad</h3>
             <div class="table-actions">
                 <span class="table-info">
-                    Mostrando {{ historial.start_index }} - {{ historial.end_index }} de {{ historial.paginator.count }}
+                    Mostrando {{ historial_acciones.start_index }} - {{ historial_acciones.end_index }} de {{ historial_acciones.paginator.count }}
                 </span>
             </div>
         </div>
@@ -117,7 +117,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for item in historial %}
+                    {% for item in historial_acciones %}
                     <tr class="activity-row">
                         <td>
                             <input type="checkbox" class="checkbox-historial" value="{{ item.id }}" onchange="actualizarBotonEliminar()">

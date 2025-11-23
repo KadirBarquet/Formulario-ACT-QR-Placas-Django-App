@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from apps.formulario.models import UsuarioAutorizacion, HistorialAutorizacion
+from apps.formulario.models import UsuarioAutorizacion, HistorialAcciones
 from apps.formulario.form import UsuarioAutorizacionForm
 from django.urls import reverse_lazy
 from django.db.models import Q
@@ -108,9 +108,21 @@ class UsuarioAutorizacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
     
     def form_valid(self, form):
         messages.success(self.request, 'Usuario actualizado exitosamente')
-        
-        # Registrar en historial
-        HistorialAutorizacion.objects.create(
+
+        # Registrar en historial para cada autorización del usuario
+        autorizaciones = self.object.autorizaciones.all()
+
+        if autorizaciones.exists():
+            for autorizacion in autorizaciones:
+                HistorialAcciones.objects.create(
+                    autorizacion=autorizacion,
+                    creado_por=self.request.user,
+                    accion='ACTUALIZAR_USUARIO',
+                    descripcion=f'Usuario {self.object.nombres} actualizado'
+                )
+
+        # Si no tiene autorizaciones, registrar sin autorización
+        HistorialAcciones.objects.create(
             autorizacion=None,
             creado_por=self.request.user,
             accion='ACTUALIZAR_USUARIO',
@@ -156,7 +168,7 @@ class UsuarioAutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin,
                 _add_delete(auth_key)
                 try:
                     # Registrar en historial antes de eliminar la autorización
-                    HistorialAutorizacion.objects.create(
+                    HistorialAcciones.objects.create(
                         autorizacion=auth,
                         creado_por=request.user,
                         accion='ELIMINAR_AUTORIZACION_POR_ELIMINAR_USUARIO',

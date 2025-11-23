@@ -205,12 +205,12 @@ class Autorizacion(AuditoriaModel):
             return (self.vigencia - hoy).days
         return 0
 
-class HistorialAutorizacion(AuditoriaModel):
-    #Historial de cambios en las autorizaciones
+class HistorialAcciones(AuditoriaModel):
+    #Historial de acciones en el sistema
     autorizacion = models.ForeignKey(
         Autorizacion,
         on_delete=models.CASCADE,
-        related_name='historial',
+        related_name='historial_acciones',
         null=True,
         blank=True
     )
@@ -222,14 +222,14 @@ class HistorialAutorizacion(AuditoriaModel):
     creado_por = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='historial_autorizaciones_creados',
+        related_name='historial_acciones_creados',
         verbose_name='Usuario que realizó la acción'
     )
     
     class Meta:
-        db_table = 'formulario_historial_autorizacion'
-        verbose_name = 'Historial de Autorización'
-        verbose_name_plural = 'Historial de Autorizaciones'
+        db_table = 'formulario_historial_acciones'
+        verbose_name = 'Historial de Acción'
+        verbose_name_plural = 'Historial de Acciones'
         ordering = ['-fecha_accion']
     
     def __str__(self):

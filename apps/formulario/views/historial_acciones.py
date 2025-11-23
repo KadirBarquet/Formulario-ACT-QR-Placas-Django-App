@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView
 from django.views import View
-from apps.formulario.models import HistorialAutorizacion
+from apps.formulario.models import HistorialAcciones
 from django.utils import timezone
 from django.shortcuts import redirect
 from django.contrib import messages
@@ -13,9 +13,9 @@ from django.http import JsonResponse
 
 class HistorialListView(LoginRequiredMixin, ListView):
     """Lista de todo el historial del sistema"""
-    model = HistorialAutorizacion
+    model = HistorialAcciones
     template_name = 'formulario/historial_acciones_list.html'
-    context_object_name = 'historial'
+    context_object_name = 'historial_acciones'
     paginate_by = 50
     
     def get_queryset(self):
@@ -39,25 +39,25 @@ class HistorialListView(LoginRequiredMixin, ListView):
         context = super().get_context_data(**kwargs)
         
         # Lista de acciones disponibles
-        context['acciones'] = HistorialAutorizacion.objects.values_list(
+        context['acciones'] = HistorialAcciones.objects.values_list(
             'accion', flat=True
         ).distinct()
         
         # Total de registros (todas las acciones en el historial)
-        context['total_acciones'] = HistorialAutorizacion.objects.count()
+        context['total_acciones'] = HistorialAcciones.objects.count()
         
         # QRs - Contar todas las acciones relacionadas con QR en el historial
-        context['total_qrs_generados'] = HistorialAutorizacion.objects.filter(
+        context['total_qrs_generados'] = HistorialAcciones.objects.filter(
             accion__in=['GENERAR_QR', 'DESCARGAR_QR']
         ).count()
         
         # PDFs - Contar todas las acciones relacionadas con PDF en el historial
-        context['total_pdfs_generados'] = HistorialAutorizacion.objects.filter(
+        context['total_pdfs_generados'] = HistorialAcciones.objects.filter(
             accion__in=['GENERAR_PDF', 'DESCARGAR_PDF']
         ).count()
         
         # Actualizaciones - Contar todas las acciones de actualización en el historial
-        context['total_actualizaciones'] = HistorialAutorizacion.objects.filter(
+        context['total_actualizaciones'] = HistorialAcciones.objects.filter(
             accion__in=['ACTUALIZAR_AUTORIZACION', 'ACTUALIZAR_USUARIO']
         ).count()
         
@@ -71,8 +71,8 @@ class VaciarHistorialView(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         try:
             # Eliminar todos los registros del historial
-            cantidad = HistorialAutorizacion.objects.count()
-            HistorialAutorizacion.objects.all().delete()
+            cantidad = HistorialAcciones.objects.count()
+            HistorialAcciones.objects.all().delete()
             
             messages.success(
                 request, 
@@ -102,7 +102,7 @@ class EliminarHistorialSeleccionadoView(LoginRequiredMixin, View):
                 })
             
             # Eliminar los registros seleccionados
-            cantidad = HistorialAutorizacion.objects.filter(
+            cantidad = HistorialAcciones.objects.filter(
                 id__in=ids_seleccionados
             ).delete()[0]
             

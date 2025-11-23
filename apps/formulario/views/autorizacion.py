@@ -1,6 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.views.generic import ListView, DetailView, UpdateView, DeleteView
-from apps.formulario.models import Autorizacion, HistorialAutorizacion
+from apps.formulario.models import Autorizacion, HistorialAcciones
 from apps.formulario.form import BusquedaAutorizacionForm, FiltroAutorizacionForm
 from django.urls import reverse_lazy
 from django.contrib import messages
@@ -139,7 +139,7 @@ class AutorizacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin, Update
             cambios.append(f'Estado cambiado a {estado}')
         
         if cambios:
-            HistorialAutorizacion.objects.create(
+            HistorialAcciones.objects.create(
                 autorizacion=self.object,
                 creado_por=self.request.user,
                 accion='ACTUALIZAR_AUTORIZACION',
@@ -176,7 +176,7 @@ class AutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
         _add_delete(auth_key)
         try:
             # Registrar eliminación en historial antes de eliminar
-            HistorialAutorizacion.objects.create(
+            HistorialAcciones.objects.create(
                 autorizacion=autorizacion,
                 creado_por=request.user,
                 accion='ELIMINAR_AUTORIZACION',
@@ -198,7 +198,7 @@ class AutorizacionDeleteView(LoginRequiredMixin, PermissionRequiredMixin, Delete
                         _add_delete(usuario_key)
                         try:
                             # Registrar en historial que se elimina usuario por eliminación de autorización
-                            HistorialAutorizacion.objects.create(
+                            HistorialAcciones.objects.create(
                                 autorizacion=None,
                                 creado_por=request.user,
                                 accion='ELIMINAR_USUARIO_POR_ELIMINAR_AUTORIZACION',
