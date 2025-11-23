@@ -51,7 +51,7 @@
                     <span class="btn-icon">🔍</span>
                     Aplicar Filtros
                 </button>
-                <a href="{% url 'formulario:historial_list' %}" class="btn-secondary">
+                <a href="{% url 'formulario:historial_acciones_list' %}" class="btn-secondary">
                     <span class="btn-icon">🔄</span>
                     Limpiar
                 </a>
@@ -226,7 +226,7 @@
             <h3>No hay registros en el historial</h3>
             <p>No se encontraron actividades que coincidan con los criterios de búsqueda.</p>
             <div class="empty-actions">
-                <a href="{% url 'formulario:historial_list' %}" class="btn-secondary">Ver todo el historial</a>
+                <a href="{% url 'formulario:historial_acciones_list' %}" class="btn-secondary">Ver todo el historial</a>
             </div>
         </div>
         {% endif %}
@@ -1027,7 +1027,7 @@ function cerrarModalVaciar() {
 function confirmarVaciar() {
     const form = document.createElement('form');
     form.method = 'POST';
-    form.action = '{% url "formulario:vaciar_historial" %}';
+    form.action = '{% url "formulario:vaciar_historial_acciones" %}';
     
     const csrfToken = document.createElement('input');
     csrfToken.type = 'hidden';
@@ -1065,7 +1065,7 @@ function eliminarSeleccionados() {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     
     // Enviar petición AJAX
-    fetch('{% url "formulario:eliminar_historial_seleccionado" %}', {
+    fetch('{% url "formulario:eliminar_historial_acciones_seleccionado" %}', {
         method: 'POST',
         headers: {
             'X-CSRFToken': csrfToken,
