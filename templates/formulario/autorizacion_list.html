@@ -67,6 +67,20 @@
 <!-- Tabla de autorizaciones -->
 <div class="table-card">
     {% if autorizaciones %}
+    <div class="table-header">
+        <h3>Lista de Autorizaciones</h3>
+        <div class="table-actions">
+            {% if is_paginated %}
+            <span class="table-info">
+                Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+            </span>
+            {% else %}
+            <span class="table-info">
+                Total: {{ autorizaciones.count }} autorización{{ autorizaciones.count|pluralize:"es" }}
+            </span>
+            {% endif %}
+        </div>
+    </div> 
     <div class="table-responsive">
         <table class="data-table">
             <thead>
@@ -602,6 +616,26 @@
     .stat-item {
         padding: 15px;
     }
+}
+
+.table-header {
+    padding: 25px 25px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.table-header h3 {
+    margin: 0;
+    color: #2c3e50;
+    font-size: 1.4rem;
+}
+
+.table-info {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    font-weight: 500;
 }
 </style>
 

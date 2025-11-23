@@ -63,6 +63,20 @@
     <!-- Tabla de usuarios -->
     <div class="table-card">
         {% if usuarios %}
+        <div class="table-header">
+            <h3>Lista de Usuarios</h3>
+            <div class="table-actions">
+                {% if is_paginated %}
+                <span class="table-info">
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+                </span>
+                {% else %}
+                <span class="table-info">
+                    Total: {{ usuarios.count }} usuario{{ usuarios.count|pluralize:"s" }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="data-table">
                 <thead>
@@ -533,6 +547,29 @@
     .data-table {
         font-size: 0.8rem;
     }
+}
+
+.table-header {
+    padding: 25px 25px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.table-header h3 {
+    margin: 0;
+    color: #004d99;
+    font-size: 1.4rem;
+}
+
+.table-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: #f8f9fa;
+    padding: 6px 12px;
+    border-radius: 4px;
 }
 </style>
 {% endblock %}

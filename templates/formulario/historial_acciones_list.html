@@ -97,9 +97,15 @@
         <div class="table-header">
             <h3>Registros de Actividad</h3>
             <div class="table-actions">
+                {% if is_paginated %}
                 <span class="table-info">
-                    Mostrando {{ historial_acciones.start_index }} - {{ historial_acciones.end_index }} de {{ historial_acciones.paginator.count }}
+                    Mostrando {{ page_obj.start_index }} - {{ page_obj.end_index }} de {{ page_obj.paginator.count }}
+                </span> 
+                {% else %}
+                <span class="table-info">
+                    Total: {{ historial_acciones.count }} registro{{ historial_acciones.count|pluralize }}
                 </span>
+                {% endif %}
             </div>
         </div>
         <div class="table-responsive">
