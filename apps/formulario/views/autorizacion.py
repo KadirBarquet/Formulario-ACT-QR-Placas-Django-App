@@ -113,7 +113,7 @@ class AutorizacionDetailView(LoginRequiredMixin, DetailView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['historial'] = self.object.historial.select_related(
+        context['historial_acciones'] = self.object.historial_acciones.select_related(
             'creado_por'
         ).order_by('-fecha_accion')
         context['current_date'] = timezone.now().strftime('%d/%m/%Y, %H:%M')

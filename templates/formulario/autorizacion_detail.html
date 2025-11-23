@@ -134,9 +134,9 @@
             <h2>📜 Historial de Actividad</h2>
         </div>
         <div class="card-content">
-            {% if historial %}
+            {% if historial_acciones %}
             <div class="activity-list">
-                {% for actividad in historial %}
+                {% for actividad in historial_acciones %}
                 <div class="activity-item">
                     <div class="activity-icon">
                         {% if actividad.accion == 'GENERAR_QR' %}📱
