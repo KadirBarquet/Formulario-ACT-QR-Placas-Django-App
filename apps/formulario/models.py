@@ -234,3 +234,70 @@ class HistorialAcciones(AuditoriaModel):
     
     def __str__(self):
         return f"{self.autorizacion.placa} - {self.accion} - {self.fecha_accion}"
+
+class HistorialAutorizacion(AuditoriaModel):
+    """
+    Historial de autorizaciones generadas - Para reportes y seguimiento
+    Registra la creación de cada autorización para reportes en Excel
+    """
+    # Relación con la autorización (contiene todos los datos)
+    autorizacion = models.ForeignKey(
+        Autorizacion,
+        on_delete=models.CASCADE,
+        related_name='historial',
+        verbose_name='Autorización'
+    )
+
+    fecha_creacion_autorizacion = models.DateTimeField('Fecha de Creación', auto_now_add=True)
+    
+    # Usuario que generó la autorización (del sistema)
+    creado_por = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='historial_autorizaciones_creadas',
+        verbose_name='Generado por'
+    )
+    
+    class Meta:
+        db_table = 'formulario_historial_autorizaciones'
+        verbose_name = 'Historial de Autorización'
+        verbose_name_plural = 'Historial de Autorizaciones'
+        ordering = ['-fecha_creacion_autorizacion']
+        indexes = [
+            models.Index(fields=['fecha_creacion_autorizacion']),
+            models.Index(fields=['-fecha_creacion_autorizacion']),  # Para ordenamiento descendente
+        ]
+    
+    def __str__(self):
+        return f"{self.autorizacion.placa} - {self.autorizacion.tipo_autorizacion.nombre} - {self.fecha_creacion_autorizacion.strftime('%d/%m/%Y %H:%M')}"
+    
+    # Propiedades de acceso rápido (sin duplicar datos)
+    @property
+    def placa(self):
+        """Retorna la placa de la autorización"""
+        return self.autorizacion.placa
+    
+    @property
+    def usuario_nombres(self):
+        """Retorna el nombre del usuario"""
+        return self.autorizacion.usuario.nombres
+    
+    @property
+    def tipo_autorizacion(self):
+        """Retorna el tipo de autorización"""
+        return self.autorizacion.tipo_autorizacion.nombre
+    
+    @property
+    def vigencia(self):
+        """Retorna la fecha de vigencia"""
+        return self.autorizacion.vigencia
+    
+    @property
+    def esta_caducada(self):
+        """Verifica si la autorización está caducada"""
+        return self.autorizacion.esta_caducada
+    
+    @property
+    def dias_vigencia_restantes(self):
+        """Calcula los días restantes para la caducidad"""
+        return self.autorizacion.dias_restantes
