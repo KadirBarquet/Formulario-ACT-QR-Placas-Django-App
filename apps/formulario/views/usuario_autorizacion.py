@@ -109,9 +109,9 @@ class UsuarioAutorizacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
     def form_valid(self, form):
         messages.success(self.request, 'Usuario actualizado exitosamente')
         
-        # Registrar en historial (podrías crear un historial específico para usuarios)
+        # Registrar en historial
         HistorialAutorizacion.objects.create(
-            autorizacion=None,  # O crear un modelo de historial para usuarios
+            autorizacion=None,
             creado_por=self.request.user,
             accion='ACTUALIZAR_USUARIO',
             descripcion=f'Usuario {self.object.nombres} actualizado'
