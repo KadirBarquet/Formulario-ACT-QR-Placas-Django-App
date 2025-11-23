@@ -247,10 +247,10 @@ class HistorialAutorizacion(AuditoriaModel):
         related_name='historial',
         verbose_name='Autorización'
     )
-
-    fecha_creacion_autorizacion = models.DateTimeField('Fecha de Creación', auto_now_add=True)
     
     # Usuario que generó la autorización (del sistema)
+    # NOTA: AuditoriaModel ya tiene 'creado_por', pero con related_name diferente
+    # Sobrescribimos para tener un related_name específico
     creado_por = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
@@ -258,18 +258,20 @@ class HistorialAutorizacion(AuditoriaModel):
         verbose_name='Generado por'
     )
     
+    # fecha_creacion viene de AuditoriaModel (auto_now_add=True)
+    
     class Meta:
         db_table = 'formulario_historial_autorizaciones'
         verbose_name = 'Historial de Autorización'
         verbose_name_plural = 'Historial de Autorizaciones'
-        ordering = ['-fecha_creacion_autorizacion']
+        ordering = ['-fecha_creacion']  
         indexes = [
-            models.Index(fields=['fecha_creacion_autorizacion']),
-            models.Index(fields=['-fecha_creacion_autorizacion']),  # Para ordenamiento descendente
+            models.Index(fields=['fecha_creacion']), 
+            models.Index(fields=['-fecha_creacion']),  
         ]
     
     def __str__(self):
-        return f"{self.autorizacion.placa} - {self.autorizacion.tipo_autorizacion.nombre} - {self.fecha_creacion_autorizacion.strftime('%d/%m/%Y %H:%M')}"
+        return f"{self.autorizacion.placa} - {self.autorizacion.tipo_autorizacion.nombre} - {self.fecha_creacion.strftime('%d/%m/%Y %H:%M')}"
     
     # Propiedades de acceso rápido (sin duplicar datos)
     @property
