@@ -20,19 +20,10 @@ class TipoIdentificacionForm(forms.Form):
 
 class UsuarioAutorizacionForm(forms.ModelForm):
     """Form para los datos del usuario"""
-    placa = forms.CharField(
-        max_length=20,
-        required=True,
-        label='Placa',
-        widget=forms.TextInput(attrs={
-            'placeholder': 'Ej: OBM0979-ABC1234',
-            'class': 'form-control'
-        })
-    )
     
     class Meta:
         model = UsuarioAutorizacion
-        fields = ['nombres', 'cedula', 'ruc', 'correo', 'telefono']
+        fields = ['nombres', 'cedula', 'ruc', 'correo', 'telefono', 'activo']
         widgets = {
             'nombres': forms.TextInput(attrs={
                 'placeholder': 'Nombres completos',
@@ -42,29 +33,30 @@ class UsuarioAutorizacionForm(forms.ModelForm):
             'cedula': forms.TextInput(attrs={
                 'placeholder': 'Cédula (10 dígitos que empiece con 09)',
                 'class': 'form-control',
-                'pattern': r'^09\d{8}$',
+                'pattern': r'^09\d{8}',
                 'title': 'La cédula debe comenzar con 09 y tener 10 dígitos',
                 'maxlength': '10'
             }),
             'ruc': forms.TextInput(attrs={
                 'placeholder': 'RUC (13 dígitos)',
                 'class': 'form-control',
-                'pattern': r'^\d{13}$',
+                'pattern': r'^\d{13}',
                 'title': 'El RUC debe tener 13 dígitos',
                 'maxlength': '13'
             }),
             'correo': forms.EmailInput(attrs={
                 'placeholder': 'Correo electrónico',
-                'class': 'form-control',
-                'required': 'required'
+                'class': 'form-control'
             }),
             'telefono': forms.TextInput(attrs={
                 'placeholder': 'Teléfono (10 dígitos que empiece con 09)',
                 'class': 'form-control',
-                'pattern': r'^09\d{8}$',
+                'pattern': r'^09\d{8}',
                 'title': 'El teléfono debe comenzar con 09 y tener 10 dígitos',
-                'required': 'required',
                 'maxlength': '10'
+            }),
+            'activo': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
             }),
         }
         labels = {
@@ -73,6 +65,7 @@ class UsuarioAutorizacionForm(forms.ModelForm):
             'ruc': 'RUC',
             'correo': 'Correo Electrónico',
             'telefono': 'Teléfono',
+            'activo': 'Estado',
         }
 
 class AutorizacionForm(forms.ModelForm):
