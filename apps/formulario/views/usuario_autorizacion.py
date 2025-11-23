@@ -113,21 +113,22 @@ class UsuarioAutorizacionUpdateView(LoginRequiredMixin, PermissionRequiredMixin,
         autorizaciones = self.object.autorizaciones.all()
 
         if autorizaciones.exists():
+            # Si el usuario tiene autorizaciones, crear un registro por cada una
             for autorizacion in autorizaciones:
                 HistorialAcciones.objects.create(
                     autorizacion=autorizacion,
                     creado_por=self.request.user,
                     accion='ACTUALIZAR_USUARIO',
-                    descripcion=f'Usuario {self.object.nombres} actualizado'
+                    descripcion=f'Usuario {self.object.nombres} actualizado (Placa: {autorizacion.placa})'
                 )
-
-        # Si no tiene autorizaciones, registrar sin autorización
-        HistorialAcciones.objects.create(
-            autorizacion=None,
-            creado_por=self.request.user,
-            accion='ACTUALIZAR_USUARIO',
-            descripcion=f'Usuario {self.object.nombres} actualizado'
-        )
+        else:
+            # Si no tiene autorizaciones, registrar sin autorización
+            HistorialAcciones.objects.create(
+                autorizacion=None,
+                creado_por=self.request.user,
+                accion='ACTUALIZAR_USUARIO',
+                descripcion=f'Usuario {self.object.nombres} actualizado (sin autorizaciones)'
+            )
         
         return super().form_valid(form)
 
