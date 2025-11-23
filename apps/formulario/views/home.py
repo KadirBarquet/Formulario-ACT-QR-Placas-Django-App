@@ -1,7 +1,7 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import TemplateView
 from django.views import View
-from apps.formulario.models import UsuarioAutorizacion, Autorizacion, TipoAutorizacion, HistorialAutorizacion
+from apps.formulario.models import UsuarioAutorizacion, Autorizacion, TipoAutorizacion, HistorialAcciones
 from django.utils import timezone
 from django.db.models import Count
 from django.http import JsonResponse
@@ -40,7 +40,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         ).order_by('-fecha_creacion')[:5]
         
         # Actividad reciente
-        context['actividad_reciente'] = HistorialAutorizacion.objects.select_related(
+        context['actividad_reciente'] = HistorialAcciones.objects.select_related(
             'creado_por', 'autorizacion'
         ).order_by('-fecha_accion')[:10]
         

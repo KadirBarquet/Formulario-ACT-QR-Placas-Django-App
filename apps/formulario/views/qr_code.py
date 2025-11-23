@@ -3,7 +3,7 @@ from apps.formulario.utils import generar_url_qr, validar_autorizacion_caducada,
 from django.views import View
 from apps.formulario.form import FormularioCompletoQRForm
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.formulario.models import Autorizacion, HistorialAutorizacion
+from apps.formulario.models import Autorizacion, HistorialAcciones
 from django.contrib import messages
 from django.utils import timezone
 
@@ -49,7 +49,7 @@ class GenerarQRView(LoginRequiredMixin, View):
                 # Crear registros en historial (QR y PDF)
                 try:
                     # Registrar generación de QR
-                    HistorialAutorizacion.objects.create(
+                    HistorialAcciones.objects.create(
                         autorizacion=autorizacion,
                         creado_por=request.user,
                         accion='GENERAR_QR',
@@ -57,7 +57,7 @@ class GenerarQRView(LoginRequiredMixin, View):
                     )
                     
                     # Registrar generación de PDF
-                    HistorialAutorizacion.objects.create(
+                    HistorialAcciones.objects.create(
                         autorizacion=autorizacion,
                         creado_por=request.user,
                         accion='GENERAR_PDF',
@@ -113,7 +113,7 @@ class DescargarQRView(LoginRequiredMixin, View):
         
         # Registrar descarga en historial (no bloquear si falla)
         try:
-            HistorialAutorizacion.objects.create(
+            HistorialAcciones.objects.create(
                 autorizacion=autorizacion,
                 creado_por=request.user,
                 accion='DESCARGAR_QR',
@@ -142,7 +142,7 @@ class GenerarPDFView(LoginRequiredMixin, View):
         
         # Registrar descarga de PDF en historial
         try:
-            HistorialAutorizacion.objects.create(
+            HistorialAcciones.objects.create(
                 autorizacion=autorizacion,
                 creado_por=request.user,
                 accion='DESCARGAR_PDF',
@@ -282,7 +282,7 @@ class DescargarQRAutorizacionView(LoginRequiredMixin, View):
 
         # Registrar descarga en historial
         try:
-            HistorialAutorizacion.objects.create(
+            HistorialAcciones.objects.create(
                 autorizacion=autorizacion,
                 creado_por=request.user,
                 accion='DESCARGAR_QR',
@@ -306,7 +306,7 @@ class DescargarPDFAutorizacionView(LoginRequiredMixin, View):
         
         # Registrar descarga de PDF en historial
         try:
-            HistorialAutorizacion.objects.create(
+            HistorialAcciones.objects.create(
                 autorizacion=autorizacion,
                 creado_por=request.user,
                 accion='DESCARGAR_PDF',

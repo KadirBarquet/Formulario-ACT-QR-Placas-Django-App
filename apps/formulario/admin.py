@@ -1,5 +1,5 @@
 from django.contrib import admin
-from apps.formulario.models import TipoAutorizacion, UsuarioAutorizacion, Autorizacion, HistorialAutorizacion
+from apps.formulario.models import TipoAutorizacion, UsuarioAutorizacion, Autorizacion, HistorialAcciones
 
 @admin.register(TipoAutorizacion)
 class TipoAutorizacionAdmin(admin.ModelAdmin):
@@ -95,8 +95,8 @@ class AutorizacionAdmin(admin.ModelAdmin):
         }),
     )
 
-@admin.register(HistorialAutorizacion)
-class HistorialAutorizacionAdmin(admin.ModelAdmin):
+@admin.register(HistorialAcciones)
+class HistorialAccionesAdmin(admin.ModelAdmin):
     list_display = ('autorizacion', 'creado_por', 'accion', 'fecha_accion')
     list_filter = ('accion', 'fecha_accion')
     search_fields = ('autorizacion__placa', 'creado_por__email', 'accion')
