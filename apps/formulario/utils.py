@@ -35,14 +35,20 @@ def validar_autorizacion_caducada(vigencia):
 def crear_autorizacion_desde_form(form_data, usuario_creador):
     """Crea una nueva autorización a partir de los datos del formulario"""
     try:
-        # Preparar datos del usuario
-        cedula = form_data.get('cedula', '').strip()
-        ruc = form_data.get('ruc', '').strip()
+        # CORRECCIÓN: Manejo seguro de None antes de hacer strip()
+        # Usamos (form_data.get('campo') or '') para asegurar que sea string antes del strip
         
-        # Convertir cadenas vacías a None para campos únicos
-        ruc = ruc if ruc else None
-        correo = form_data.get('correo', '').strip() or None
-        telefono = form_data.get('telefono', '').strip() or None
+        cedula_val = form_data.get('cedula')
+        cedula = cedula_val.strip() if cedula_val else None
+        
+        ruc_val = form_data.get('ruc')
+        ruc = ruc_val.strip() if ruc_val else None
+        
+        correo_val = form_data.get('correo')
+        correo = correo_val.strip() if correo_val else None
+        
+        telefono_val = form_data.get('telefono')
+        telefono = telefono_val.strip() if telefono_val else None
         
         # Buscar usuario existente por cédula
         usuario = None
@@ -57,19 +63,30 @@ def crear_autorizacion_desde_form(form_data, usuario_creador):
         if usuario:
             # Actualizar campos si vienen en el formulario
             usuario.nombres = form_data['nombres']
+            
+            # Solo actualizamos si vienen datos nuevos
             if ruc:
                 usuario.ruc = ruc
             if correo:
                 usuario.correo = correo
             if telefono:
                 usuario.telefono = telefono
+                
+            # Si el usuario existente no tenía cédula y ahora sí viene, la guardamos
+            if not usuario.cedula and cedula:
+                usuario.cedula = cedula
+                
             usuario.save()
             usuario_creado = False
         else:
+            # Validar que exista al menos un documento para crear nuevo usuario
+            if not cedula and not ruc:
+                raise ValueError("Debe existir al menos Cédula o RUC para registrar al usuario")
+
             # Crear nuevo usuario
             usuario = UsuarioAutorizacion.objects.create(
                 nombres=form_data['nombres'],
-                cedula=cedula if cedula else None,
+                cedula=cedula,
                 ruc=ruc,
                 correo=correo,
                 telefono=telefono,
@@ -90,4 +107,6 @@ def crear_autorizacion_desde_form(form_data, usuario_creador):
         return autorizacion, usuario_creado
         
     except Exception as e:
+        # Imprimir error en consola para depuración
+        print(f"Error en crear_autorizacion_desde_form: {str(e)}")
         raise Exception(f"Error al crear autorización: {str(e)}")
