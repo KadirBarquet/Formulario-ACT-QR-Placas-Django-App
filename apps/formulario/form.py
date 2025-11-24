@@ -271,8 +271,12 @@ class FormularioCompletoQRForm(forms.Form):
         """Validación general del formulario"""
         cleaned_data = super().clean()
         tipo_identificacion = cleaned_data.get('tipo_identificacion')
-        cedula = cleaned_data.get('cedula', '').strip()
-        ruc = cleaned_data.get('ruc', '').strip()
+        cedula = cleaned_data.get('cedula', '') or ''
+        ruc = cleaned_data.get('ruc') or ''  # Convertir None a string vacío
+        
+        # Hacer strip() solo si son strings válidos
+        cedula = cedula.strip() if cedula else ''
+        ruc = ruc.strip() if ruc else ''
         
         # Validaciones según el tipo de identificación seleccionado
         if tipo_identificacion == 'cedula':
