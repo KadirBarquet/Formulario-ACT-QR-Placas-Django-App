@@ -20,7 +20,7 @@ class HistorialAutorizacionListView(LoginRequiredMixin, ListView):
     """Lista de historial de autorizaciones con filtros para reportes"""
     model = HistorialAutorizacion
     template_name = 'formulario/historial_autorizaciones_list.html'
-    context_object_name = 'historial'
+    context_object_name = 'historial_autorizaciones'
     paginate_by = 50
     
     def get_queryset(self):

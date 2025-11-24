@@ -3,7 +3,7 @@ from apps.formulario.utils import generar_url_qr, validar_autorizacion_caducada,
 from django.views import View
 from apps.formulario.form import FormularioCompletoQRForm
 from django.shortcuts import render, redirect, get_object_or_404
-from apps.formulario.models import Autorizacion, HistorialAcciones
+from apps.formulario.models import Autorizacion, HistorialAcciones, HistorialAutorizacion
 from django.contrib import messages
 from django.utils import timezone
 
@@ -45,6 +45,15 @@ class GenerarQRView(LoginRequiredMixin, View):
                 autorizacion.codigo_qr = qr_url
                 autorizacion.qr_generado = True
                 autorizacion.save()
+
+                # Registrar en HistorialAutorizacion
+                try:
+                    HistorialAutorizacion.objects.create(
+                        autorizacion=autorizacion,
+                        creado_por=request.user
+                    )
+                except Exception as e:
+                    print(f'Error al registrar en historial: {e}')
 
                 # Crear registros en historial (QR y PDF)
                 try:
