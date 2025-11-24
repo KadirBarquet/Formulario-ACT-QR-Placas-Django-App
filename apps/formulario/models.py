@@ -55,6 +55,7 @@ class UsuarioAutorizacion(AuditoriaModel):
             )
         ]
     )
+    
     ruc = models.CharField(
         'RUC',
         max_length=13,

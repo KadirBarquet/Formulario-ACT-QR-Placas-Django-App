@@ -368,15 +368,19 @@ class FormularioCompletoQRForm(forms.Form):
     def clean_ruc(self):
         """Validación específica para RUC"""
         ruc = self.cleaned_data.get('ruc', '').strip()
-        if ruc:
-            # Remover espacios
-            ruc = ruc.replace(' ', '')
-            
-            if len(ruc) != 13:
-                raise forms.ValidationError('El RUC debe tener exactamente 13 dígitos')
-            
-            if not ruc.isdigit():
-                raise forms.ValidationError('El RUC debe contener solo números')
+
+        # Si está vacío, retornar None en lugar de cadena vacía
+        if not ruc:
+            return None
+
+        # Remover espacios
+        ruc = ruc.replace(' ', '')
+
+        if len(ruc) != 13:
+            raise forms.ValidationError('El RUC debe tener exactamente 13 dígitos')
+
+        if not ruc.isdigit():
+            raise forms.ValidationError('El RUC debe contener solo números')
         
         return ruc
     

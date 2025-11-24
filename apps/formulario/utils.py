@@ -35,17 +35,47 @@ def validar_autorizacion_caducada(vigencia):
 def crear_autorizacion_desde_form(form_data, usuario_creador):
     """Crea una nueva autorización a partir de los datos del formulario"""
     try:
-        # Crear o obtener usuario
-        usuario, creado = UsuarioAutorizacion.objects.get_or_create(
-            cedula=form_data['cedula'],
-            defaults={
-                'nombres': form_data['nombres'],
-                'ruc': form_data.get('ruc'),
-                'correo': form_data['correo'],
-                'telefono': form_data['telefono'],
-                'creado_por': usuario_creador
-            }
-        )
+        # Preparar datos del usuario
+        cedula = form_data.get('cedula', '').strip()
+        ruc = form_data.get('ruc', '').strip()
+        
+        # Convertir cadenas vacías a None para campos únicos
+        ruc = ruc if ruc else None
+        correo = form_data.get('correo', '').strip() or None
+        telefono = form_data.get('telefono', '').strip() or None
+        
+        # Buscar usuario existente por cédula
+        usuario = None
+        if cedula:
+            usuario = UsuarioAutorizacion.objects.filter(cedula=cedula).first()
+        
+        # Si no se encontró por cédula y hay RUC, buscar por RUC
+        if not usuario and ruc:
+            usuario = UsuarioAutorizacion.objects.filter(ruc=ruc).first()
+        
+        # Si se encontró el usuario, actualizarlo
+        if usuario:
+            # Actualizar campos si vienen en el formulario
+            usuario.nombres = form_data['nombres']
+            if ruc:
+                usuario.ruc = ruc
+            if correo:
+                usuario.correo = correo
+            if telefono:
+                usuario.telefono = telefono
+            usuario.save()
+            usuario_creado = False
+        else:
+            # Crear nuevo usuario
+            usuario = UsuarioAutorizacion.objects.create(
+                nombres=form_data['nombres'],
+                cedula=cedula if cedula else None,
+                ruc=ruc,
+                correo=correo,
+                telefono=telefono,
+                creado_por=usuario_creador
+            )
+            usuario_creado = True
         
         # Crear autorización
         autorizacion = Autorizacion.objects.create(
@@ -57,7 +87,7 @@ def crear_autorizacion_desde_form(form_data, usuario_creador):
             creado_por=usuario_creador
         )
         
-        return autorizacion, creado
+        return autorizacion, usuario_creado
         
     except Exception as e:
         raise Exception(f"Error al crear autorización: {str(e)}")
