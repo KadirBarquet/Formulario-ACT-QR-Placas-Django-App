@@ -206,7 +206,7 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         
         # Fecha de generación
         ws.merge_cells('A3:H3')
-        ws['A3'] = f'Generado el: {timezone.now().strftime("%d/%m/%Y %H:%M:%S")}'
+        ws['A3'] = f'Generado el: {timezone.localtime(timezone.now()).strftime("%d/%m/%Y %H:%M:%S")}'
         ws['A3'].font = subtitle_font
         ws['A3'].alignment = Alignment(horizontal="center", vertical="center")
         
@@ -303,7 +303,8 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         response = HttpResponse(
             content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         )
-        filename = f'Historial_Autorizaciones_{timezone.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+        fecha_hora_local = timezone.localtime(timezone.now())
+        filename = f'Historial_Autorizaciones_{fecha_hora_local.strftime("%Y%m%d_%H%M%S")}.xlsx'
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         
         wb.save(response)
