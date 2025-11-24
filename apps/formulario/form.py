@@ -367,9 +367,16 @@ class FormularioCompletoQRForm(forms.Form):
     
     def clean_ruc(self):
         """Validación específica para RUC"""
-        ruc = self.cleaned_data.get('ruc', '').strip()
+        ruc = self.cleaned_data.get('ruc')
 
-        # Si está vacío, retornar None en lugar de cadena vacía
+        # Si está vacío o None, retornar None en lugar de cadena vacía
+        if ruc is None or ruc == '':
+            return None
+
+        # Convertir a string y hacer strip por seguridad
+        ruc = str(ruc).strip()
+
+        # Si después del strip está vacío, retornar None
         if not ruc:
             return None
 
