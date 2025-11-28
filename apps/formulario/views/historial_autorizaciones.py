@@ -31,21 +31,39 @@ class HistorialAutorizacionListView(LoginRequiredMixin, ListView):
             'creado_por'
         )
         
-        # Filtro por fecha de creación (fecha exacta)
-        fecha_creacion = self.request.GET.get('fecha_creacion')
-        if fecha_creacion:
+        # Filtro por RANGO de fecha de creación (emisión)
+        fecha_creacion_desde = self.request.GET.get('fecha_creacion_desde')
+        fecha_creacion_hasta = self.request.GET.get('fecha_creacion_hasta')
+        
+        if fecha_creacion_desde:
             try:
-                fecha_creacion_obj = datetime.strptime(fecha_creacion, '%Y-%m-%d').date()
-                queryset = queryset.filter(fecha_creacion__date=fecha_creacion_obj)
+                fecha_desde_obj = datetime.strptime(fecha_creacion_desde, '%Y-%m-%d').date()
+                queryset = queryset.filter(fecha_creacion__date__gte=fecha_desde_obj)
             except ValueError:
                 pass
         
-        # Filtro por fecha de vigencia (fecha exacta)
-        fecha_vigencia = self.request.GET.get('fecha_vigencia')
-        if fecha_vigencia:
+        if fecha_creacion_hasta:
             try:
-                fecha_vigencia_obj = datetime.strptime(fecha_vigencia, '%Y-%m-%d').date()
-                queryset = queryset.filter(autorizacion__vigencia=fecha_vigencia_obj)
+                fecha_hasta_obj = datetime.strptime(fecha_creacion_hasta, '%Y-%m-%d').date()
+                queryset = queryset.filter(fecha_creacion__date__lte=fecha_hasta_obj)
+            except ValueError:
+                pass
+        
+        # Filtro por RANGO de fecha de vigencia (caducidad)
+        fecha_vigencia_desde = self.request.GET.get('fecha_vigencia_desde')
+        fecha_vigencia_hasta = self.request.GET.get('fecha_vigencia_hasta')
+        
+        if fecha_vigencia_desde:
+            try:
+                fecha_vigencia_desde_obj = datetime.strptime(fecha_vigencia_desde, '%Y-%m-%d').date()
+                queryset = queryset.filter(autorizacion__vigencia__gte=fecha_vigencia_desde_obj)
+            except ValueError:
+                pass
+        
+        if fecha_vigencia_hasta:
+            try:
+                fecha_vigencia_hasta_obj = datetime.strptime(fecha_vigencia_hasta, '%Y-%m-%d').date()
+                queryset = queryset.filter(autorizacion__vigencia__lte=fecha_vigencia_hasta_obj)
             except ValueError:
                 pass
         
@@ -93,8 +111,10 @@ class HistorialAutorizacionListView(LoginRequiredMixin, ListView):
         
         # Preservar valores de filtros en el contexto
         context['filtros'] = {
-            'fecha_creacion': self.request.GET.get('fecha_creacion', ''),
-            'fecha_vigencia': self.request.GET.get('fecha_vigencia', ''),
+            'fecha_creacion_desde': self.request.GET.get('fecha_creacion_desde', ''),
+            'fecha_creacion_hasta': self.request.GET.get('fecha_creacion_hasta', ''),
+            'fecha_vigencia_desde': self.request.GET.get('fecha_vigencia_desde', ''),
+            'fecha_vigencia_hasta': self.request.GET.get('fecha_vigencia_hasta', ''),
             'tipo_autorizacion': self.request.GET.get('tipo_autorizacion', ''),
             'placa': self.request.GET.get('placa', ''),
             'usuario': self.request.GET.get('usuario', ''),
@@ -117,20 +137,41 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
             'creado_por'
         )
         
-        # Aplicar filtros (igual que en ListView)
-        fecha_creacion = request.GET.get('fecha_creacion')
-        if fecha_creacion:
+        # Aplicar filtros (igual que en ListView) - ACTUALIZADO CON RANGOS
+        
+        # Filtro por RANGO de fecha de creación (emisión)
+        fecha_creacion_desde = request.GET.get('fecha_creacion_desde')
+        fecha_creacion_hasta = request.GET.get('fecha_creacion_hasta')
+        
+        if fecha_creacion_desde:
             try:
-                fecha_creacion_obj = datetime.strptime(fecha_creacion, '%Y-%m-%d').date()
-                queryset = queryset.filter(fecha_creacion__date=fecha_creacion_obj)
+                fecha_desde_obj = datetime.strptime(fecha_creacion_desde, '%Y-%m-%d').date()
+                queryset = queryset.filter(fecha_creacion__date__gte=fecha_desde_obj)
             except ValueError:
                 pass
         
-        fecha_vigencia = request.GET.get('fecha_vigencia')
-        if fecha_vigencia:
+        if fecha_creacion_hasta:
             try:
-                fecha_vigencia_obj = datetime.strptime(fecha_vigencia, '%Y-%m-%d').date()
-                queryset = queryset.filter(autorizacion__vigencia=fecha_vigencia_obj)
+                fecha_hasta_obj = datetime.strptime(fecha_creacion_hasta, '%Y-%m-%d').date()
+                queryset = queryset.filter(fecha_creacion__date__lte=fecha_hasta_obj)
+            except ValueError:
+                pass
+        
+        # Filtro por RANGO de fecha de vigencia (caducidad)
+        fecha_vigencia_desde = request.GET.get('fecha_vigencia_desde')
+        fecha_vigencia_hasta = request.GET.get('fecha_vigencia_hasta')
+        
+        if fecha_vigencia_desde:
+            try:
+                fecha_vigencia_desde_obj = datetime.strptime(fecha_vigencia_desde, '%Y-%m-%d').date()
+                queryset = queryset.filter(autorizacion__vigencia__gte=fecha_vigencia_desde_obj)
+            except ValueError:
+                pass
+        
+        if fecha_vigencia_hasta:
+            try:
+                fecha_vigencia_hasta_obj = datetime.strptime(fecha_vigencia_hasta, '%Y-%m-%d').date()
+                queryset = queryset.filter(autorizacion__vigencia__lte=fecha_vigencia_hasta_obj)
             except ValueError:
                 pass
         
@@ -179,10 +220,8 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         logo_path = os.path.join(settings.BASE_DIR, 'static', 'img', 'Logo_ACT.png')
         if os.path.exists(logo_path):
             img = Image(logo_path)
-            # Ajustar tamaño del logo (ancho x alto en píxeles)
             img.width = 100
             img.height = 100
-            # Posicionar el logo en la celda A1
             ws.add_image(img, 'A1')
         
         # Ajustar altura de las primeras filas para el logo
@@ -190,15 +229,14 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         ws.row_dimensions[2].height = 20
         ws.row_dimensions[3].height = 20
         ws.row_dimensions[4].height = 20
+        ws.row_dimensions[5].height = 20
         
         # ========== ENCABEZADO DEL REPORTE ==========
-        # Título principal (al lado derecho del logo)
         ws.merge_cells('C1:H1')
         ws['C1'] = 'REPORTE DE HISTORIAL DE AUTORIZACIONES'
         ws['C1'].font = title_font
         ws['C1'].alignment = Alignment(horizontal="center", vertical="center")
         
-        # Información de la entidad
         ws.merge_cells('C2:H2')
         ws['C2'] = 'EMOVIM-EP | Autoridad de Control de Tránsito Milagro'
         ws['C2'].font = subtitle_font
@@ -210,23 +248,54 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         ws['A3'].font = subtitle_font
         ws['A3'].alignment = Alignment(horizontal="center", vertical="center")
         
+        # Mostrar rangos de fechas aplicados
+        filtros_texto = []
+        if fecha_creacion_desde or fecha_creacion_hasta:
+            rango_creacion = "Fecha Emisión: "
+            if fecha_creacion_desde:
+                rango_creacion += f"Desde {datetime.strptime(fecha_creacion_desde, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+            if fecha_creacion_hasta:
+                if fecha_creacion_desde:
+                    rango_creacion += f" hasta {datetime.strptime(fecha_creacion_hasta, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+                else:
+                    rango_creacion += f"Hasta {datetime.strptime(fecha_creacion_hasta, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+            filtros_texto.append(rango_creacion)
+        
+        if fecha_vigencia_desde or fecha_vigencia_hasta:
+            rango_vigencia = "Vigencia: "
+            if fecha_vigencia_desde:
+                rango_vigencia += f"Desde {datetime.strptime(fecha_vigencia_desde, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+            if fecha_vigencia_hasta:
+                if fecha_vigencia_desde:
+                    rango_vigencia += f" hasta {datetime.strptime(fecha_vigencia_hasta, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+                else:
+                    rango_vigencia += f"Hasta {datetime.strptime(fecha_vigencia_hasta, '%Y-%m-%d').strftime('%d/%m/%Y')}"
+            filtros_texto.append(rango_vigencia)
+        
+        # Mostrar filtros aplicados
+        if filtros_texto:
+            ws.merge_cells('A4:H4')
+            ws['A4'] = f'Filtros aplicados: {" | ".join(filtros_texto)}'
+            ws['A4'].font = Font(size=9, italic=True, color="666666")
+            ws['A4'].alignment = Alignment(horizontal="center", vertical="center")
+        
         # Total de registros
-        ws.merge_cells('A4:H4')
-        ws['A4'] = f'Total de registros: {queryset.count()}'
-        ws['A4'].font = info_font
-        ws['A4'].alignment = Alignment(horizontal="center", vertical="center")
+        ws.merge_cells('A5:H5')
+        ws['A5'] = f'Total de registros: {queryset.count()}'
+        ws['A5'].font = info_font
+        ws['A5'].alignment = Alignment(horizontal="center", vertical="center")
         
         # Fondo azul claro para el área de encabezado
         light_blue_fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
-        for row in range(1, 5):
+        for row in range(1, 6):
             for col in range(1, 9):
                 cell = ws.cell(row=row, column=col)
-                if row > 1 or col > 2:  # No aplicar al área del logo
+                if row > 1 or col > 2:
                     cell.fill = light_blue_fill
         
-        # Encabezados de columnas (ahora en la fila 6)
+        # Encabezados de columnas (ahora en la fila 7)
         headers = [
-            'Fecha de Creación',
+            'Fecha de Emisión',
             'Hora',
             'Fecha de Vigencia',
             'Tipo de Autorización',
@@ -237,18 +306,17 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         ]
         
         for col_num, header in enumerate(headers, 1):
-            cell = ws.cell(row=6, column=col_num)
+            cell = ws.cell(row=7, column=col_num)
             cell.value = header
             cell.font = header_font
             cell.fill = header_fill
             cell.alignment = header_alignment
             cell.border = border_thin
         
-        # Ajustar altura de la fila de encabezados
-        ws.row_dimensions[6].height = 30
+        ws.row_dimensions[7].height = 30
         
-        # Datos (ahora empiezan en la fila 7)
-        row_num = 7
+        # Datos (ahora empiezan en la fila 8)
+        row_num = 8
         for historial in queryset:
             ws.cell(row=row_num, column=1, value=historial.fecha_creacion.strftime('%d/%m/%Y'))
             ws.cell(row=row_num, column=2, value=historial.fecha_creacion.strftime('%H:%M:%S'))
@@ -289,7 +357,6 @@ class ExportarHistorialExcelView(LoginRequiredMixin, View):
         ws[f'A{footer_row}'].font = Font(size=9, color="666666", italic=True)
         ws[f'A{footer_row}'].alignment = Alignment(horizontal="center", vertical="center")
         
-        # Fondo del pie de página
         footer_fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
         ws[f'A{footer_row}'].fill = footer_fill
         ws.row_dimensions[footer_row].height = 25
